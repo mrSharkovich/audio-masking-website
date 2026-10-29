@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; media-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>AudioMask — автономный предпросмотр</title>
+  <style>
+    :root{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;color-scheme:light;--page:#f3f6f8;--panel:#fff;--raised:#f7fafb;--text:#172b3a;--muted:#526575;--line:#c9d5dd;--accent:#075e78;--on-accent:#fff;--tint:#dfefef;--focus:#087f80;--error:#a62b37;--shadow:0 12px 36px #172b3a0a}
+    :root[data-theme=dark]{color-scheme:dark;--page:#0d1625;--panel:#182432;--raised:#1e2e3e;--text:#eaf2f7;--muted:#b4c3ce;--line:#43576a;--accent:#45d3c2;--on-accent:#10252a;--tint:#1c4349;--focus:#6debdc;--error:#ffb1b7;--shadow:0 12px 36px #0002}
+    *{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font-size:16px;line-height:1.6}h1,h2,h3,h4,p{margin:0}button,input,select{font:inherit}button,a,summary,input,select{touch-action:manipulation}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}a{color:inherit}button,a,summary,input,select,[tabindex]{outline-offset:5px}:focus-visible{outline:3px solid var(--focus)}[hidden]{display:none!important}
+    .shell,.header-inner,footer{max-width:1184px;margin:auto;padding-inline:32px}.site-header{background:var(--panel);border-bottom:1px solid var(--line)}.header-inner{min-height:88px;display:flex;align-items:center;gap:36px}.brand{display:flex;gap:10px;align-items:center;text-decoration:none;font-size:24px;font-weight:700;letter-spacing:-.8px}.brand svg{width:38px;height:38px;color:var(--accent);flex-shrink:0}nav{display:flex;gap:28px;margin-left:auto;font-size:14px;font-weight:600}nav a{text-decoration:none;padding-block:12px}nav a:hover,footer a:hover{color:var(--accent)}
+    .theme{border:1px solid var(--line);background:var(--raised);color:var(--text);border-radius:8px;min-height:44px;padding:7px 12px;white-space:nowrap}.workspace{padding-top:38px;scroll-margin-top:20px}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:14px;font-weight:600;margin-bottom:10px}.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}h1{font-size:clamp(26px,3.4vw,38px);line-height:1.2;letter-spacing:-1px;font-weight:650}h2{font-size:23px;line-height:1.3;letter-spacing:-.4px}h3{font-size:18px}h4{font-size:15px}.intro p:last-child{color:var(--muted);margin-top:10px}.caption{color:var(--muted);font-size:13px}
+    .banner{display:flex;align-items:center;gap:14px;padding:13px 18px;background:var(--tint);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}.banner strong{display:block;font-size:14px}.banner p{font-size:12px;color:var(--muted)}.info-icon{display:grid;place-items:center;flex-shrink:0;width:24px;height:24px;border:1px solid var(--accent);border-radius:50%;color:var(--accent);font-weight:600}
+    .studio{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}.topline{display:flex;justify-content:space-between;gap:12px;padding:11px 28px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}.topline .dot{margin-right:8px;width:6px;height:6px}.content{padding:28px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.heading-group{display:flex;align-items:center;gap:12px}.index{border:1px solid var(--line);border-radius:6px;min-width:30px;height:30px;display:grid;place-items:center;font-size:12px;color:var(--muted)}.chip{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:4px 10px;background:var(--raised)}
+    .dropzone{text-align:center;background:var(--raised);border:1px dashed var(--line);border-radius:10px;padding:26px 20px}.dropzone.dragging{border-color:var(--accent);background:var(--tint)}.dropzone[aria-disabled=true]{border-style:solid}.upload-icon{width:38px;height:38px;color:var(--accent);display:block;margin:0 auto 10px}.drop-title{font-size:18px;font-weight:600}.dropzone .caption{margin:3px 0 16px}.button{min-height:46px;padding:10px 20px;display:inline-flex;align-items:center;justify-content:center;gap:16px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font-size:14px;font-weight:600;line-height:1.4}.button:hover:not(:disabled){border-color:var(--accent)}.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}.text-button{padding:9px 0;min-height:44px;background:none;border:0;color:var(--accent);font-size:14px;text-decoration:underline;text-underline-offset:4px}.danger{color:var(--error)}.note{font-size:12px;color:var(--muted);margin-top:12px}.file-summary{margin-top:24px;padding:18px;border:1px solid var(--line);border-radius:10px}.file-line{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}.file-info{min-width:0}.file-info strong{display:block;overflow-wrap:anywhere;font-size:15px}.file-info p{font-size:12px;color:var(--muted)}audio{width:100%;display:block;height:42px}.player-label{display:block;font-weight:600;font-size:14px;margin-bottom:10px}.error{color:var(--error);font-size:14px;margin-top:12px}.parameters{margin-top:24px;border-block:1px solid var(--line);padding-block:16px}summary{cursor:pointer;font-size:14px;font-weight:600;min-height:28px}.parameters p{font-size:14px;color:var(--muted);margin-top:12px;max-width:70ch}.status{font-size:12px;color:var(--muted);margin-top:12px;min-height:20px}.preview-controls{border-top:1px solid var(--line);background:var(--raised);padding:14px 28px;border-radius:0 0 14px 14px}.preview-controls summary{font-size:12px;color:var(--muted)}.preview-controls p{font-size:13px;color:var(--muted);margin-top:8px}
+    .result-note{font-size:14px;color:var(--muted);max-width:80ch;margin-bottom:22px}.players{display:grid;grid-template-columns:1fr 1fr;gap:20px}.channel{border:1px solid var(--line);border-radius:10px;padding:20px;min-width:0}.channel.demo{background:var(--raised)}.channel-tag{font-size:12px;color:var(--accent);display:block;margin-bottom:12px;font-weight:600}.file-caption{font-size:12px;color:var(--muted);margin-top:12px;overflow-wrap:anywhere}.result-nav{display:flex;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);padding-top:24px;margin-top:24px}.result-nav .text-button{margin-right:auto}.tools{margin-top:32px;border-top:1px solid var(--line)}.tool{padding-top:28px}.tool+.tool{border-top:1px solid var(--line);margin-top:28px}.tool>p{color:var(--muted);font-size:14px;max-width:80ch;margin:12px 0 18px}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}.metric{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:18px}.metric strong{font-size:14px}.metric-value{display:block;font-size:30px;letter-spacing:-1px;color:var(--accent);margin:4px 0}.metric small{display:block;color:var(--muted);font-size:12px}fieldset{border:0;padding:0;margin:18px 0;min-width:0}legend{font-weight:600;font-size:14px;margin-bottom:8px}.options{display:flex;flex-wrap:wrap;gap:8px 22px}.options label{display:flex;align-items:center;gap:8px;min-height:44px;font-size:14px}input[type=radio]{accent-color:var(--accent);width:18px;height:18px}.transcript{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--raised)}.transcript p{color:var(--muted);font-size:14px;margin-top:10px;white-space:pre-wrap;user-select:text}
+    .how{padding-top:64px;scroll-margin-top:24px}.info-heading{display:flex;align-items:baseline;justify-content:space-between;gap:24px}.info-heading p{font-size:14px;color:var(--muted);max-width:450px}.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;list-style:none;padding:0;margin:32px 0 0}.steps li{border-top:1px solid var(--line);padding-top:24px}.step{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--tint);color:var(--accent);margin-bottom:16px;font-size:14px;font-weight:600}.steps p{color:var(--muted);font-size:14px;margin-top:8px;max-width:35ch}.about{display:grid;grid-template-columns:1.5fr 1fr;gap:60px;border-top:1px solid var(--line);margin-top:64px;padding:36px 0 44px;scroll-margin-top:24px}.about p{color:var(--muted);margin-top:14px;max-width:66ch}.about aside{font-size:14px}footer{display:flex;align-items:center;gap:28px;border-top:1px solid var(--line);padding-block:24px;font-size:13px}footer p{color:var(--muted)}footer a{margin-left:auto;text-decoration:none}.skip{position:fixed;left:12px;top:12px;transform:translateY(-200%);padding:12px;background:var(--panel);border:2px solid var(--accent);z-index:10}.skip:focus{transform:none}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+    @media(max-width:800px){.header-inner{flex-wrap:wrap;gap:16px;padding-block:14px}nav{order:3;width:100%;justify-content:space-between;margin:0;gap:10px}.theme{margin-left:auto}.workspace{padding-top:26px}.workspace-caption{display:none}.info-heading{flex-direction:column;gap:10px}.about{gap:28px}}
+    @media(max-width:600px){.shell,.header-inner,footer{padding-inline:18px}.header-inner{min-height:0;gap:12px;padding-block:12px}.brand{font-size:22px}nav{font-size:12px}nav a{padding-block:4px}.intro{margin-bottom:18px}.intro p:last-child{font-size:14px}.banner{padding:12px;align-items:flex-start}.banner strong{font-size:12px}.banner p{font-size:11px}.content{padding:18px}.topline{padding-inline:18px;font-size:10px}.section-heading{flex-wrap:wrap;gap:10px;margin-bottom:18px}h2{font-size:21px}.chip{margin-left:42px}.dropzone{padding:22px 12px}.drop-title{font-size:16px}.file-line{flex-direction:column;gap:6px}.players,.metrics,.steps,.about{grid-template-columns:1fr}.actions,.result-nav{flex-direction:column;align-items:stretch}.result-nav .text-button{margin-right:0}.channel{padding:16px}.preview-controls{padding:14px 18px}.how{padding-top:44px}.steps{gap:24px;margin-top:24px}.steps p{max-width:none}.about{margin-top:40px;padding-block:28px;gap:18px}footer{flex-wrap:wrap;gap:8px 20px}footer p{order:3;width:100%}}
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+  </style>
+  <script>
+    // Run before the first paint. No preference is persisted.
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
+    document.documentElement.dataset.theme = systemTheme.matches ? 'dark' : 'light';
+  </script>
+</head>
+<body>
+  <a class="skip" href="#processing">К обработке аудио</a>
+  <header class="site-header"><div class="header-inner">
+    <a class="brand" href="#processing" aria-label="AudioMask — к обработке"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="10" fill="currentColor"/><path d="M11 27 20 12l9 15M15 23h10M20 18v11" stroke="var(--on-accent)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>AudioMask</a>
+    <nav aria-label="Основная навигация"><a href="#processing">Обработка</a><a href="#how">Как это работает</a><a href="#about">О проекте</a></nav>
+    <button class="theme" id="theme" type="button" aria-label="Тёмная тема" aria-pressed="false">Светлая тема</button>
+  </div></header>
+  <main class="shell">
+    <section class="workspace" id="processing" aria-labelledby="page-title">
+      <div class="intro"><div><p class="eyebrow"><span class="dot" aria-hidden="true"></span>Аудиостудия</p><h1 id="page-title">Маскирование аудиозаписи</h1><p>Загрузите запись, сравните звучание и исследуйте интерфейс.</p></div><span class="caption workspace-caption">Автономный предпросмотр</span></div>
+      <div class="banner" role="note"><span class="info-icon" aria-hidden="true">i</span><div><strong>Демонстрация — реальные операции не выполняются</strong><p>Это интерактивный макет. Маскирование, метрики и LLM не подключены. Файлы никуда не отправляются.</p></div></div>
+      <div class="studio">
+        <div class="topline"><span><span class="dot" aria-hidden="true"></span>AudioMask Studio</span><span>Локальный макет</span></div>
+        <div class="content">
+          <form id="upload-form" aria-label="Форма маскирования">
+            <div class="section-heading"><div class="heading-group"><span class="index" aria-hidden="true">01</span><h2 id="form-heading" tabindex="-1">Исходная запись</h2></div><span class="chip" id="file-state">Ожидает файл</span></div>
+            <div class="dropzone" id="dropzone" aria-disabled="false">
+              <svg class="upload-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 31V8m0 0-8 8m8-8 8 8M10 29v10h28V29" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <p class="drop-title" id="drop-title">Перетащите аудиозапись сюда</p><p class="caption">или выберите файл на устройстве</p>
+              <input id="file-input" type="file" hidden aria-label="Аудиофайл">
+              <button class="button" id="choose" type="button">Выбрать файл</button>
+            </div>
+            <p class="note">Форматы и ограничения будущего сервиса ещё не согласованы. Воспроизведение зависит от браузера.</p>
+            <div class="file-summary" id="file-summary" hidden>
+              <div class="file-line"><div class="file-info"><strong id="file-name"></strong><p><span id="file-size"></span> · <span id="file-duration">Длительность недоступна</span></p></div><button class="text-button danger" id="remove" type="button">Удалить файл</button></div>
+              <span class="player-label">Предпрослушивание исходной записи</span><audio id="preview-audio" controls preload="metadata" aria-label="Предпрослушивание исходной записи"></audio>
+              <p id="preview-error" class="error" role="alert" hidden>Браузер не смог воспроизвести файл. Выберите другую запись или используйте тестовый пример ниже.</p>
+            </div>
+            <details class="parameters"><summary>Параметры маскирования</summary><p>Параметры пока недоступны: контракт алгоритма не согласован. Макет не выполняет реального маскирования.</p></details>
+            <p id="file-error" class="error" role="alert" hidden></p>
+            <div class="actions"><button class="button primary" id="run" type="submit" disabled>Начать маскирование</button><button class="button" id="reopen" type="button" hidden>Открыть текущий результат</button></div>
+            <p id="form-status" class="status" role="status">Кнопка покажет только демонстрационный экран, без обработки аудио.</p>
+          </form>
+          <section id="result" aria-labelledby="result-heading" hidden>
+            <div class="section-heading"><div class="heading-group"><span class="index" aria-hidden="true">02</span><h2 id="result-heading" tabindex="-1">Результат демонстрации</h2></div><span class="chip">Макет результата</span></div>
+            <p class="result-note">Это не обработанный файл. Справа воспроизводится отдельный синтетический тон, созданный для предпросмотра. Он не получен из вашей записи.</p>
+            <div class="players">
+              <div class="channel"><span class="channel-tag">Вход</span><span class="player-label">Оригинал</span><audio id="original-audio" controls preload="metadata" aria-label="Оригинал"></audio><p id="original-name" class="file-caption"></p><p id="original-error" class="error" role="alert" hidden>Оригинал недоступен для воспроизведения в этом браузере.</p></div>
+              <div class="channel demo"><span class="channel-tag">Тестовый пример</span><span class="player-label">После маскирования</span><audio id="demo-audio" controls preload="metadata" aria-label="После маскирования — синтетический пример"></audio><p class="file-caption">Демонстрационный синтетический тон, не результат маскирования</p><p id="demo-error" class="error" role="alert" hidden>Браузер не смог воспроизвести тестовый WAV.</p></div>
+            </div>
+            <div class="actions"><button class="button primary" id="download-demo" type="button">Скачать демонстрационный файл</button><button class="button" type="button" disabled>Скачать обработанное аудио</button></div>
+            <p class="note">Настоящего обработанного файла нет. Скачивается только независимый тестовый WAV, не оригинал.</p><p id="download-error" class="error" role="alert" hidden></p>
+            <div class="result-nav"><button class="text-button" id="back" type="button">Вернуться к форме</button><button class="button" id="again" type="button">Обработать ещё раз</button><button class="button" id="new-file" type="button">Загрузить другой файл</button></div>
+            <div class="tools">
+              <section class="tool" aria-labelledby="quality-heading"><div class="heading-group"><span class="index" aria-hidden="true">03</span><h3 id="quality-heading">Оценка качества</h3></div><p>Запускается отдельно. Ниже можно посмотреть только пример отображения PESQ и ViSQOL.</p><button class="button" id="quality" type="button">Оценить качество</button><div class="metrics" aria-live="polite"><div class="metric"><strong>PESQ</strong><span class="metric-value" id="pesq">—</span><small id="pesq-note">Не запрошено</small></div><div class="metric"><strong>ViSQOL</strong><span class="metric-value" id="visqol">—</span><small id="visqol-note">Не запрошено</small></div></div></section>
+              <section class="tool" aria-labelledby="transcript-heading"><div class="heading-group"><span class="index" aria-hidden="true">04</span><h3 id="transcript-heading">Транскрибация · необязательно</h3></div><p>Текст в макете заранее задан. Это не распознавание выбранной записи.</p><fieldset id="sources"><legend>Какую запись распознать?</legend><div class="options"><label><input type="radio" name="source" value="original" checked>Исходное аудио</label><label><input type="radio" name="source" value="masked">Маскированное аудио</label><label><input type="radio" name="source" value="both">Оба файла</label></div></fieldset><button class="button" id="transcribe" type="button">Запустить транскрибацию</button><div id="transcripts"></div><p id="transcript-status" class="status" role="status">LLM не запускается. Показаны будут только демонстрационные тексты.</p></section>
+            </div>
+          </section>
+        </div>
+        <details class="preview-controls"><summary>Посмотреть макет без собственного аудио</summary><p>Можно выбрать синтетическую тестовую запись и пройти все экраны. Пользовательские файлы не нужны.</p><button class="text-button" id="sample" type="button">Использовать тестовую запись</button></details>
+      </div>
+    </section>
+    <section class="how" id="how" aria-labelledby="how-heading"><div class="info-heading"><h2 id="how-heading">Как это работает</h2><p>Весь процесс — в одном рабочем пространстве.</p></div><ol class="steps"><li><span class="step" aria-hidden="true">1</span><h3>Выберите запись</h3><p>Добавьте один аудиофайл и прослушайте оригинал.</p></li><li><span class="step" aria-hidden="true">2</span><h3>Запустите маскирование</h3><p>В рабочем приложении здесь будет обработка. Сейчас кнопка открывает демонстрацию.</p></li><li><span class="step" aria-hidden="true">3</span><h3>Исследуйте результат</h3><p>Прослушайте записи, отдельно запросите метрики или транскрибацию.</p></li></ol></section>
+    <section class="about" id="about" aria-labelledby="about-heading"><div><h2 id="about-heading">О проекте</h2><p>AudioMask — курсовой проект для исследования эффективности алгоритма маскирования аудиозаписей. Этот файл показывает будущий интерфейс Audio Studio.</p></div><aside><span class="dot" aria-hidden="true"></span><p>Автономный HTML-макет. Открывается без сервера и установки пакетов. Реальные алгоритмы и сервисы не подключены.</p></aside></section>
+  </main>
+  <footer><strong>AudioMask</strong><p>Исследование маскирования аудиозаписей</p><a href="#processing">К рабочей области</a></footer>
+  <noscript><p class="shell">Для переключения экранов и выбора аудио включите JavaScript. Маскирование в этом макете не выполняется.</p></noscript>
+  <script>
+    (() => {
+      'use strict';
+      const get = (id) => document.getElementById(id);
+      let manualTheme = false;
+      function applyTheme(dark) {
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        get('theme').setAttribute('aria-pressed', String(dark));
+        get('theme').textContent = dark ? '☾ Тёмная тема' : '☀ Светлая тема';
+      }
+      applyTheme(systemTheme.matches);
+      systemTheme.addEventListener('change', (event) => { if (!manualTheme) applyTheme(event.matches); });
+      get('theme').addEventListener('click', () => { manualTheme = true; applyTheme(document.documentElement.dataset.theme !== 'dark'); });
+
+      let selectedFile = null, sourceUrl = null, resultUrl = null, busy = false, revision = 0;
+      function detachPlayer(id) { const audio = get(id); audio.pause(); audio.removeAttribute('src'); audio.load(); }
+      function releaseSource() {
+        detachPlayer('preview-audio'); detachPlayer('original-audio');
+        if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+        sourceUrl = null;
+      }
+      function releaseResult() {
+        detachPlayer('demo-audio');
+        if (resultUrl) URL.revokeObjectURL(resultUrl);
+        resultUrl = null;
+      }
+      function showError(message) { get('file-error').textContent = message; get('file-error').hidden = !message; }
+      function resetTools() {
+        get('quality').disabled = false; get('quality').textContent = 'Оценить качество';
+        for (const name of ['pesq', 'visqol']) { get(name).textContent = '—'; get(name + '-note').textContent = 'Не запрошено'; }
+        get('transcribe').disabled = false; get('transcribe').textContent = 'Запустить транскрибацию';
+        get('sources').disabled = false; get('transcripts').replaceChildren();
+        get('transcript-status').textContent = 'LLM не запускается. Показаны будут только демонстрационные тексты.';
+      }
+      function showView(result, focus = true) {
+        get('upload-form').hidden = result;
+        get('result').hidden = !result;
+        get('reopen').hidden = !resultUrl;
+        if (result) get('preview-audio').pause();
+        else { get('original-audio').pause(); get('demo-audio').pause(); }
+        if (focus) get(result ? 'result-heading' : 'form-heading').focus();
+      }
+      function lockFile(locked) {
+        busy = locked;
+        for (const id of ['choose', 'file-input', 'remove', 'sample', 'reopen']) get(id).disabled = locked;
+        get('run').disabled = locked || !selectedFile;
+        get('dropzone').setAttribute('aria-disabled', String(locked));
+        get('dropzone').classList.remove('dragging');
+        get('drop-title').textContent = locked ? 'Файл защищён от изменений' : 'Перетащите аудиозапись сюда';
+        get('file-state').textContent = locked ? 'Демонстрационный переход' : selectedFile ? 'Файл выбран' : 'Ожидает файл';
+      }
+      function chooseFiles(files) {
+        if (busy || files.length === 0) return;
+        if (files.length !== 1) { showError('Выберите один аудиофайл за раз.'); return; }
+        if (!files[0].size) { showError('Файл пуст. Выберите другую запись.'); return; }
+        let nextUrl;
+        try { nextUrl = URL.createObjectURL(files[0]); }
+        catch { showError('Не удалось открыть файл в браузере. Выберите его ещё раз.'); return; }
+        revision++; releaseSource(); releaseResult(); resetTools();
+        selectedFile = files[0]; sourceUrl = nextUrl;
+        get('preview-audio').src = sourceUrl; get('original-audio').src = sourceUrl;
+        get('file-name').textContent = selectedFile.name; get('original-name').textContent = selectedFile.name;
+        get('file-size').textContent = (selectedFile.size / 1024).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' КБ';
+        get('file-duration').textContent = 'Чтение длительности…';
+        for (const id of ['preview-error', 'original-error', 'demo-error', 'download-error']) get(id).hidden = true;
+        get('file-summary').hidden = false; get('choose').textContent = 'Заменить файл';
+        get('form-status').textContent = 'Кнопка покажет только демонстрационный экран, без обработки аудио.';
+        showError(''); lockFile(false); showView(false, false);
+      }
+      function clearFile() {
+        if (busy) return;
+        revision++; releaseSource(); releaseResult(); resetTools(); selectedFile = null;
+        get('file-input').value = ''; get('file-summary').hidden = true; get('choose').textContent = 'Выбрать файл';
+        get('form-status').textContent = 'Выберите запись для проверки макета.';
+        showError(''); lockFile(false); showView(false);
+      }
+      get('choose').addEventListener('click', () => { if (!busy) get('file-input').click(); });
+      get('file-input').addEventListener('change', (event) => { chooseFiles(event.target.files); event.target.value = ''; });
+      get('remove').addEventListener('click', clearFile);
+      for (const name of ['dragover', 'drop']) document.addEventListener(name, (event) => event.preventDefault());
+      get('dropzone').addEventListener('dragover', (event) => { event.preventDefault(); event.dataTransfer.dropEffect = busy ? 'none' : 'copy'; if (!busy) get('dropzone').classList.add('dragging'); });
+      get('dropzone').addEventListener('dragleave', () => get('dropzone').classList.remove('dragging'));
+      get('dropzone').addEventListener('drop', (event) => { event.preventDefault(); get('dropzone').classList.remove('dragging'); if (!busy) chooseFiles(event.dataTransfer.files); });
+      get('preview-audio').addEventListener('loadedmetadata', (event) => {
+        const seconds = event.target.duration;
+        get('file-duration').textContent = Number.isFinite(seconds) ? Math.floor(seconds / 60) + ':' + String(Math.floor(seconds % 60)).padStart(2, '0') : 'Длительность недоступна';
+      });
+      for (const [player, message] of [['preview-audio', 'preview-error'], ['original-audio', 'original-error'], ['demo-audio', 'demo-error']]) {
+        get(player).addEventListener('error', () => { if (get(player).hasAttribute('src')) { get(message).hidden = false; if (player === 'preview-audio') get('file-duration').textContent = 'Длительность недоступна'; } });
+      }
+
+      // A small independent WAV fixture; input audio is never read or transformed.
+      function testTone(frequency) {
+        const rate = 8000, samples = rate, buffer = new ArrayBuffer(44 + samples * 2), view = new DataView(buffer);
+        function text(offset, value) { for (let i = 0; i < value.length; i++) view.setUint8(offset + i, value.charCodeAt(i)); }
+        text(0, 'RIFF'); view.setUint32(4, 36 + samples * 2, true); text(8, 'WAVE'); text(12, 'fmt ');
+        view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+        view.setUint32(24, rate, true); view.setUint32(28, rate * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+        text(36, 'data'); view.setUint32(40, samples * 2, true);
+        for (let i = 0; i < samples; i++) view.setInt16(44 + i * 2, Math.sin(2 * Math.PI * frequency * i / rate) * 1800 * Math.min(i / 400, (samples - i) / 400, 1), true);
+        return new Blob([buffer], { type: 'audio/wav' });
+      }
+      get('sample').addEventListener('click', () => { if (!busy) { chooseFiles([new File([testTone(440)], 'audiomask-demo-source.wav', { type: 'audio/wav' })]); get('form-heading').focus(); } });
+      get('upload-form').addEventListener('submit', (event) => {
+        event.preventDefault(); if (busy || !selectedFile) return;
+        lockFile(true); showError(''); get('preview-audio').pause();
+        get('form-status').textContent = 'Переключаем экран макета. Запись не обрабатывается.';
+        const request = ++revision;
+        setTimeout(() => {
+          if (request !== revision) return;
+          try {
+            const nextUrl = URL.createObjectURL(testTone(660));
+            releaseResult(); resultUrl = nextUrl; get('demo-audio').src = resultUrl;
+            get('demo-error').hidden = true; get('download-error').hidden = true; resetTools();
+            get('form-status').textContent = 'Макет результата доступен. Реального маскирования не было.';
+            lockFile(false); showView(true);
+          } catch { lockFile(false); showError('Не удалось создать тестовый пример. Повторите попытку.'); }
+        }, 450);
+      });
+      get('reopen').addEventListener('click', () => { if (!busy && resultUrl) showView(true); });
+      for (const id of ['back', 'again']) get(id).addEventListener('click', () => { if (!busy) showView(false); });
+      get('new-file').addEventListener('click', clearFile);
+      get('download-demo').addEventListener('click', () => {
+        if (!resultUrl) return;
+        try {
+          const link = document.createElement('a'); link.href = resultUrl; link.download = 'audiomask-demo-tone-not-masked.wav';
+          document.body.append(link); link.click(); link.remove();
+        } catch { get('download-error').textContent = 'Браузер не разрешил скачивание тестового файла.'; get('download-error').hidden = false; }
+      });
+      get('quality').addEventListener('click', () => {
+        if (!resultUrl || get('quality').disabled) return;
+        const request = revision; get('quality').disabled = true;
+        for (const name of ['pesq', 'visqol']) get(name + '-note').textContent = 'Показываем демонстрационный пример…';
+        setTimeout(() => {
+          if (request !== revision) return;
+          get('pesq').textContent = '3,2'; get('visqol').textContent = '3,8';
+          for (const name of ['pesq', 'visqol']) get(name + '-note').textContent = 'Демонстрационное значение — не вычисленная метрика';
+          get('quality').disabled = false;
+        }, 400);
+      });
+      get('transcribe').addEventListener('click', () => {
+        if (!resultUrl || get('transcribe').disabled) return;
+        const request = revision, selection = document.querySelector('input[name=source]:checked').value;
+        get('transcribe').disabled = true; get('sources').disabled = true; get('transcripts').replaceChildren();
+        get('transcript-status').textContent = 'Показываем пример текста. Распознавание не выполняется.';
+        setTimeout(() => {
+          if (request !== revision) return;
+          const sources = selection === 'both' ? ['original', 'masked'] : [selection];
+          for (const source of sources) {
+            const article = document.createElement('article'), heading = document.createElement('h4'), text = document.createElement('p'), button = document.createElement('button');
+            article.className = 'transcript'; heading.textContent = (source === 'original' ? 'Оригинал' : 'После маскирования') + ' — демонстрационный текст';
+            text.textContent = 'Это заранее заданный пример для проверки макета AudioMask. Текст не получен распознаванием вашей записи.';
+            button.type = 'button'; button.className = 'text-button'; button.textContent = 'Копировать текст'; button.setAttribute('aria-label', 'Копировать текст: ' + (source === 'original' ? 'оригинал' : 'демонстрационный результат'));
+            button.addEventListener('click', async () => {
+              try { await navigator.clipboard.writeText(text.textContent); if (request === revision) get('transcript-status').textContent = 'Демонстрационный текст скопирован.'; }
+              catch { if (request === revision) get('transcript-status').textContent = 'Автокопирование недоступно. Выделите текст и скопируйте вручную.'; }
+            });
+            article.append(heading, text, button); get('transcripts').append(article);
+          }
+          get('transcribe').disabled = false; get('sources').disabled = false;
+          get('transcript-status').textContent = 'Показаны только демонстрационные тексты. LLM не запускалась.';
+        }, 400);
+      });
+      // Release browser resources when leaving; no files or preferences are saved.
+      window.addEventListener('pagehide', () => { revision++; releaseSource(); releaseResult(); });
+      window.addEventListener('pageshow', (event) => { if (event.persisted) { lockFile(false); clearFile(); } });
+    })();
+  </script>
+</body>
+</html>

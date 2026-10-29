@@ -1,5 +1,5 @@
 # Локальные инструкции для coding agent
-/AGENTS.md
+#/AGENTS.md
 
 # Frontend: зависимости, сборки и кеши
 node_modules/
@@ -18,7 +18,9 @@ pnpm-debug.log*
 venv/
 env/
 __pycache__/
-*.py[cod]
+*.pyc
+*.pyo
+*.pyd
 *.egg-info/
 .eggs/
 .pytest_cache/
@@ -44,11 +46,21 @@ test-results/
 !.env.*.example
 *.pem
 *.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+secrets/
+credentials/
+private/
 
 # Рабочие файлы приложения и загруженные аудиозаписи
 uploads/
 storage/
 outputs/
+recordings/
+results/
+transcripts/
 tmp/
 temp/
 *.wav
@@ -62,9 +74,8 @@ temp/
 *.aif
 *.aiff
 *.wma
-
-# Разрешённые или синтетические WAV-фикстуры для тестов
-!**/tests/fixtures/**/*.wav
+*.webm
+*.mp4
 
 # Логи
 logs/

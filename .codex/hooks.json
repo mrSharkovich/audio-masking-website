@@ -1,0 +1,171 @@
+{
+  "description": "Security Check: first-stage terminal policy; review and trust via /hooks.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^(Bash|exec_command|shell|shell_command)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/security_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/security_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "Security Check"
+          }
+        ]
+      },
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/dependency_guard.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/dependency_guard.py'\"",
+            "timeout": 10,
+            "statusMessage": "Dependency Guard"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/agent_role_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/agent_role_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "Agent Role Check"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/agent_role_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/agent_role_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "Agent Role Check"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/session_summary.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/session_summary.py'\"",
+            "timeout": 3,
+            "statusMessage": "Session Summary"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/session_summary.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/session_summary.py'\"",
+            "timeout": 3,
+            "statusMessage": "Session Summary"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/test_runner.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/test_runner.py'\"",
+            "timeout": 75,
+            "statusMessage": "Test Runner"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/code_quality_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/code_quality_check.py'\"",
+            "timeout": 60,
+            "statusMessage": "Code Quality Check"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/qa_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/qa_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "QA Check"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/spec_compliance_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/spec_compliance_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "Spec Compliance Check"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/secrets_privacy_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/secrets_privacy_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "Secrets & Privacy Check"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/dependency_guard.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/dependency_guard.py'\"",
+            "timeout": 10,
+            "statusMessage": "Dependency Guard"
+          }
+        ]
+      },
+      {
+        "matcher": "^(apply_patch|Edit|Write)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/documentation_check.py'\"",
+            "commandWindows": "powershell.exe -NoProfile -NonInteractive -Command \"& 'C:/Program Files/Python311/python.exe' -X utf8 'C:/Users/mr.Sharkovich/Desktop/audio-masking-website/.codex/hooks/documentation_check.py'\"",
+            "timeout": 10,
+            "statusMessage": "Documentation Check"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,8 +1,57 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { expect, it, vi } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { AudioAdapters, AudioResult, OperationValue } from './types/audio';
+
+beforeEach(() => {
+  window.history.replaceState(null, '', '/process');
+  window.scrollTo = vi.fn();
+  Element.prototype.scrollIntoView = vi.fn();
+});
+
+it('navigates pages and history, keeps the theme and resets it on a fresh mount', async () => {
+  window.history.replaceState(null, '', '/');
+  const user = userEvent.setup();
+  const view = render(<App />);
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Маскирование аудиозаписей');
+  await user.click(screen.getByRole('button', { name: 'Тёмная тема' }));
+  await user.click(screen.getByRole('link', { name: 'Начать обработку' }));
+  expect(window.location.pathname).toBe('/process');
+  expect(screen.getByLabelText('Аудиофайл')).toBeInTheDocument();
+  for (const [name, path] of [['Как это работает', '/how-it-works'], ['О проекте', '/about'], ['Главная', '/']]) {
+    await user.click(within(screen.getByRole('navigation')).getByRole('link', { name }));
+    expect(window.location.pathname).toBe(path);
+    expect(within(screen.getByRole('navigation')).getByRole('link', { name })).toHaveAttribute('aria-current', 'page');
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    expect(screen.queryByLabelText('Аудиофайл')).not.toBeInTheDocument();
+  }
+  act(() => {
+    window.history.replaceState(null, '', '/about');
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  });
+  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('О проекте');
+  view.unmount();
+  render(<App />);
+  expect(document.documentElement.dataset.theme).toBe('light');
+});
+
+it('links to metric explanations without resetting theme and keeps the brand text only', async () => {
+  window.history.replaceState(null, '', '/');
+  render(<App />);
+  const user = userEvent.setup();
+  const brand = screen.getByRole('link', { name: 'AudioMask — на главную' });
+  expect(brand).toHaveTextContent('AudioMask');
+  expect(brand.querySelector('svg, img')).toBeNull();
+  await user.click(screen.getByRole('button', { name: 'Тёмная тема' }));
+  await user.click(screen.getByRole('link', { name: 'Подробнее об оценке качества' }));
+  expect(window.location.pathname + window.location.hash).toBe('/how-it-works#quality');
+  expect(document.documentElement.dataset.theme).toBe('dark');
+  expect(screen.getByRole('heading', { name: 'Оценка качества аудио' })).toBeInTheDocument();
+  expect(screen.getByText(/16 кГц \(16 000 Гц\)/)).toBeInTheDocument();
+  expect(screen.getByText(/не универсальное ограничение/)).toBeInTheDocument();
+  expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
+});
 
 function adapters(): AudioAdapters {
   return {

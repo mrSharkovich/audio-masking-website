@@ -35,16 +35,18 @@
 
 @layer layout {
   body { font-size: 16px; line-height: 1.6; background: var(--page); color: var(--text); }
+  .page-shell { padding-bottom: 44px; }
   .page-shell, .header-inner, .site-footer { max-width: 1184px; margin-inline: auto; padding-inline: 32px; }
   .site-header { background: var(--surface); border-bottom: 1px solid var(--border); }
   .header-inner { min-height: 88px; display: flex; align-items: center; gap: 36px; }
   .site-header nav { display: flex; gap: 28px; margin-left: auto; font-size: 14px; font-weight: 600; }
   .site-header nav a { text-decoration: none; padding-block: 12px; }
+  .site-header nav a[aria-current='page'] { color: var(--accent); text-decoration: underline; text-underline-offset: 6px; }
   .site-header nav a:hover, .site-footer a:hover { color: var(--accent); }
   .workspace-section { padding-top: 46px; scroll-margin-top: 24px; }
   .workspace-intro { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 24px; }
   h1 { font-size: clamp(26px, 3.4vw, 38px); line-height: 1.2; font-weight: 650; letter-spacing: -1.2px; }
-  h2 { font-size: 23px; line-height: 1.3; font-weight: 650; letter-spacing: -.5px; }
+  h2, .info-heading h1, .about-section h1 { font-size: 23px; line-height: 1.3; font-weight: 650; letter-spacing: -.5px; }
   h3 { font-size: 18px; font-weight: 650; line-height: 1.4; }
   h4 { font-size: 15px; }
   .intro-copy { color: var(--muted); margin-top: 10px; }
@@ -69,7 +71,7 @@
   .about-section { display: grid; grid-template-columns: 1.5fr 1fr; gap: 60px; margin-top: 64px; padding: 36px 0 44px; border-top: 1px solid var(--border); scroll-margin-top: 30px; }
   .about-section > div > p { margin-top: 14px; color: var(--muted); max-width: 66ch; }
   .about-note { display: flex; gap: 12px; align-items: flex-start; padding-top: 8px; font-size: 14px; }
-  .about-note .studio-dot { margin-top: 8px; }
+  .about-note .studio-dot { margin-top: calc(14px + (1.6em - 7px) / 2); }
   .about-note p { color: var(--muted); }
   .site-footer { border-top: 1px solid var(--border); padding-block: 24px; display: flex; align-items: center; gap: 28px; font-size: 13px; }
   .site-footer > span { font-weight: 700; }
@@ -79,7 +81,13 @@
 
 @layer components {
   .brand { display: inline-flex; gap: 10px; align-items: center; text-decoration: none; white-space: nowrap; font-size: 24px; font-weight: 700; letter-spacing: -.8px; }
-  .brand svg { width: 38px; height: 38px; color: var(--accent); }
+  .info-copy { color: var(--muted); margin-top: 14px; max-width: 80ch; }
+  .info-list { color: var(--muted); padding-left: 20px; margin-block: 24px 0; max-width: 80ch; }
+  .info-list li + li { margin-top: 12px; }
+  .info-article { margin-top: 32px; max-width: 80ch; }
+  .info-article p { color: var(--muted); margin-top: 12px; }
+  .quality-note { margin-top: 24px; }
+  #quality { scroll-margin-top: 30px; }
   .theme-toggle { border: 1px solid var(--border); background: var(--surface-raised); border-radius: 8px; min-height: 44px; padding: 7px 12px; display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; }
   .theme-toggle > span:first-child { font-size: 20px; line-height: 1; }
   .demo-banner { border: 1px solid var(--border); background: var(--accent-soft); border-radius: 10px; padding: 13px 18px; display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -94,7 +102,7 @@
   .upload-symbol { width: 38px; height: 38px; color: var(--accent); display: block; margin: 0 auto 10px; }
   .drop-title { font-weight: 600; font-size: 18px; }
   .drop-caption { font-size: 14px; color: var(--muted); margin: 3px 0 16px; }
-  .button { display: inline-flex; align-items: center; justify-content: center; gap: 20px; min-height: 46px; padding: 10px 20px; border-radius: 8px; border: 1px solid transparent; font-size: 14px; font-weight: 600; line-height: 1.4; text-align: center; }
+  .button { display: inline-flex; align-items: center; justify-content: center; gap: 20px; min-height: 46px; padding: 10px 20px; border-radius: 8px; border: 1px solid transparent; font-size: 14px; font-weight: 600; line-height: 1.4; text-align: center; text-decoration: none; }
   .button.primary { background: var(--accent); color: var(--on-accent); }
   .button.primary:hover:not(:disabled) { background: var(--accent-strong); }
   .button.primary > span { font-size: 19px; }
@@ -181,7 +189,7 @@
     .site-header nav a { padding-block: 4px; }
     .header-inner { min-height: 0; gap: 12px; padding-block: 12px; }
     h1 { letter-spacing: -.8px; }
-    h2 { font-size: 21px; }
+    h2, .info-heading h1, .about-section h1 { font-size: 21px; }
     .intro-copy { font-size: 14px; }
     .workspace-section { padding-top: 24px; }
     .demo-banner { padding: 12px; align-items: flex-start; }

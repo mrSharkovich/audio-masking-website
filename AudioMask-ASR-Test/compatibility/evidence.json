@@ -1,0 +1,2760 @@
+{
+  "generated_utc": "2026-11-08T17:12:35.907850+00:00",
+  "method": "PyPI metadata graph + wheel tags; no installs; no binary or weight downloads",
+  "limitation": "No backtracking; no runtime guarantee; CPU-index packages require on-VM resolution/import check",
+  "profiles": {
+    "whisper/3.12": {
+      "status": "metadata-compatible",
+      "packages": {
+        "faster-whisper": {
+          "version": "1.2.1",
+          "compatible_wheels": [
+            "faster_whisper-1.2.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.2.1"
+          ],
+          "dependencies": [
+            "ctranslate2<5,>=4.0",
+            "huggingface-hub>=0.21",
+            "tokenizers<1,>=0.13",
+            "onnxruntime<2,>=1.14",
+            "av>=11",
+            "tqdm"
+          ]
+        },
+        "ctranslate2": {
+          "version": "4.8.5",
+          "compatible_wheels": [
+            "ctranslate2-4.8.5-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==4.8.5"
+          ],
+          "dependencies": [
+            "numpy",
+            "pyyaml<7,>=5.3"
+          ]
+        },
+        "av": {
+          "version": "16.0.1",
+          "compatible_wheels": [
+            "av-16.0.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==16.0.1"
+          ],
+          "dependencies": []
+        },
+        "onnxruntime": {
+          "version": "1.23.2",
+          "compatible_wheels": [
+            "onnxruntime-1.23.2-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.23.2"
+          ],
+          "dependencies": [
+            "coloredlogs",
+            "flatbuffers",
+            "numpy>=1.21.6",
+            "packaging",
+            "protobuf",
+            "sympy"
+          ]
+        },
+        "tokenizers": {
+          "version": "0.22.1",
+          "compatible_wheels": [
+            "tokenizers-0.22.1-cp39-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.22.1"
+          ],
+          "dependencies": [
+            "huggingface-hub<2.0,>=0.16.4"
+          ]
+        },
+        "huggingface-hub": {
+          "version": "0.36.0",
+          "compatible_wheels": [
+            "huggingface_hub-0.36.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.36.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "fsspec>=2023.5.0",
+            "packaging>=20.9",
+            "pyyaml>=5.1",
+            "requests",
+            "tqdm>=4.42.1",
+            "typing-extensions>=3.7.4.3"
+          ]
+        },
+        "numpy": {
+          "version": "2.2.6",
+          "compatible_wheels": [
+            "numpy-2.2.6-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.2.6"
+          ],
+          "dependencies": []
+        },
+        "psutil": {
+          "version": "7.2.2",
+          "compatible_wheels": [
+            "psutil-7.2.2-cp37-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==7.2.2"
+          ],
+          "dependencies": []
+        },
+        "tqdm": {
+          "version": "4.70.1",
+          "compatible_wheels": [
+            "tqdm-4.70.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "pyyaml": {
+          "version": "6.0.3",
+          "compatible_wheels": [
+            "pyyaml-6.0.3-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<7,>=5.3"
+          ],
+          "dependencies": []
+        },
+        "coloredlogs": {
+          "version": "15.0.1",
+          "compatible_wheels": [
+            "coloredlogs-15.0.1-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "humanfriendly (>=9.1)"
+          ]
+        },
+        "flatbuffers": {
+          "version": "25.12.19",
+          "compatible_wheels": [
+            "flatbuffers-25.12.19-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "packaging": {
+          "version": "26.3",
+          "compatible_wheels": [
+            "packaging-26.3-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "protobuf": {
+          "version": "7.36.2",
+          "compatible_wheels": [
+            "protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+            "protobuf-7.36.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "sympy": {
+          "version": "1.14.0",
+          "compatible_wheels": [
+            "sympy-1.14.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "mpmath<1.4,>=1.1.0"
+          ]
+        },
+        "filelock": {
+          "version": "4.2.9",
+          "compatible_wheels": [
+            "filelock-4.2.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "fsspec": {
+          "version": "2026.9.0",
+          "compatible_wheels": [
+            "fsspec-2026.9.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2023.5.0"
+          ],
+          "dependencies": []
+        },
+        "requests": {
+          "version": "2.34.2",
+          "compatible_wheels": [
+            "requests-2.34.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "charset_normalizer<4,>=2",
+            "idna<4,>=2.5",
+            "urllib3<3,>=1.26",
+            "certifi>=2023.5.7"
+          ]
+        },
+        "typing-extensions": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "typing_extensions-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=3.7.4.3"
+          ],
+          "dependencies": []
+        },
+        "colorama": {
+          "version": "0.4.6",
+          "compatible_wheels": [
+            "colorama-0.4.6-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "humanfriendly": {
+          "version": "10.0",
+          "compatible_wheels": [
+            "humanfriendly-10.0-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=9.1"
+          ],
+          "dependencies": [
+            "pyreadline3 ; sys_platform == \"win32\" and python_version>=\"3.8\""
+          ]
+        },
+        "mpmath": {
+          "version": "1.3.0",
+          "compatible_wheels": [
+            "mpmath-1.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1.4,>=1.1.0"
+          ],
+          "dependencies": []
+        },
+        "charset-normalizer": {
+          "version": "3.5.2",
+          "compatible_wheels": [
+            "charset_normalizer-3.5.2-cp312-cp312-win_amd64.whl",
+            "charset_normalizer-3.5.2-cp37-abi3-win_amd64.whl",
+            "charset_normalizer-3.5.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2"
+          ],
+          "dependencies": []
+        },
+        "idna": {
+          "version": "3.20",
+          "compatible_wheels": [
+            "idna-3.20-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2.5"
+          ],
+          "dependencies": []
+        },
+        "urllib3": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "urllib3-2.8.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<3,>=1.26"
+          ],
+          "dependencies": []
+        },
+        "certifi": {
+          "version": "2026.10.23",
+          "compatible_wheels": [
+            "certifi-2026.10.23-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2023.5.7"
+          ],
+          "dependencies": []
+        },
+        "pyreadline3": {
+          "version": "3.5.6",
+          "compatible_wheels": [
+            "pyreadline3-3.5.6-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        }
+      }
+    },
+    "whisper/3.13": {
+      "status": "metadata-compatible",
+      "packages": {
+        "faster-whisper": {
+          "version": "1.2.1",
+          "compatible_wheels": [
+            "faster_whisper-1.2.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.2.1"
+          ],
+          "dependencies": [
+            "ctranslate2<5,>=4.0",
+            "huggingface-hub>=0.21",
+            "tokenizers<1,>=0.13",
+            "onnxruntime<2,>=1.14",
+            "av>=11",
+            "tqdm"
+          ]
+        },
+        "ctranslate2": {
+          "version": "4.8.5",
+          "compatible_wheels": [
+            "ctranslate2-4.8.5-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==4.8.5"
+          ],
+          "dependencies": [
+            "numpy",
+            "pyyaml<7,>=5.3"
+          ]
+        },
+        "av": {
+          "version": "16.0.1",
+          "compatible_wheels": [
+            "av-16.0.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==16.0.1"
+          ],
+          "dependencies": []
+        },
+        "onnxruntime": {
+          "version": "1.23.2",
+          "compatible_wheels": [
+            "onnxruntime-1.23.2-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.23.2"
+          ],
+          "dependencies": [
+            "coloredlogs",
+            "flatbuffers",
+            "numpy>=1.21.6",
+            "packaging",
+            "protobuf",
+            "sympy"
+          ]
+        },
+        "tokenizers": {
+          "version": "0.22.1",
+          "compatible_wheels": [
+            "tokenizers-0.22.1-cp39-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.22.1"
+          ],
+          "dependencies": [
+            "huggingface-hub<2.0,>=0.16.4"
+          ]
+        },
+        "huggingface-hub": {
+          "version": "0.36.0",
+          "compatible_wheels": [
+            "huggingface_hub-0.36.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.36.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "fsspec>=2023.5.0",
+            "packaging>=20.9",
+            "pyyaml>=5.1",
+            "requests",
+            "tqdm>=4.42.1",
+            "typing-extensions>=3.7.4.3"
+          ]
+        },
+        "numpy": {
+          "version": "2.2.6",
+          "compatible_wheels": [
+            "numpy-2.2.6-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.2.6"
+          ],
+          "dependencies": []
+        },
+        "psutil": {
+          "version": "7.2.2",
+          "compatible_wheels": [
+            "psutil-7.2.2-cp37-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==7.2.2"
+          ],
+          "dependencies": []
+        },
+        "tqdm": {
+          "version": "4.70.1",
+          "compatible_wheels": [
+            "tqdm-4.70.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "pyyaml": {
+          "version": "6.0.3",
+          "compatible_wheels": [
+            "pyyaml-6.0.3-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<7,>=5.3"
+          ],
+          "dependencies": []
+        },
+        "coloredlogs": {
+          "version": "15.0.1",
+          "compatible_wheels": [
+            "coloredlogs-15.0.1-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "humanfriendly (>=9.1)"
+          ]
+        },
+        "flatbuffers": {
+          "version": "25.12.19",
+          "compatible_wheels": [
+            "flatbuffers-25.12.19-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "packaging": {
+          "version": "26.3",
+          "compatible_wheels": [
+            "packaging-26.3-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "protobuf": {
+          "version": "7.36.2",
+          "compatible_wheels": [
+            "protobuf-7.36.2-cp310-abi3-win_amd64.whl",
+            "protobuf-7.36.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "sympy": {
+          "version": "1.14.0",
+          "compatible_wheels": [
+            "sympy-1.14.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "mpmath<1.4,>=1.1.0"
+          ]
+        },
+        "filelock": {
+          "version": "4.2.9",
+          "compatible_wheels": [
+            "filelock-4.2.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "fsspec": {
+          "version": "2026.9.0",
+          "compatible_wheels": [
+            "fsspec-2026.9.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2023.5.0"
+          ],
+          "dependencies": []
+        },
+        "requests": {
+          "version": "2.34.2",
+          "compatible_wheels": [
+            "requests-2.34.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "charset_normalizer<4,>=2",
+            "idna<4,>=2.5",
+            "urllib3<3,>=1.26",
+            "certifi>=2023.5.7"
+          ]
+        },
+        "typing-extensions": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "typing_extensions-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=3.7.4.3"
+          ],
+          "dependencies": []
+        },
+        "colorama": {
+          "version": "0.4.6",
+          "compatible_wheels": [
+            "colorama-0.4.6-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "humanfriendly": {
+          "version": "10.0",
+          "compatible_wheels": [
+            "humanfriendly-10.0-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=9.1"
+          ],
+          "dependencies": [
+            "pyreadline3 ; sys_platform == \"win32\" and python_version>=\"3.8\""
+          ]
+        },
+        "mpmath": {
+          "version": "1.3.0",
+          "compatible_wheels": [
+            "mpmath-1.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1.4,>=1.1.0"
+          ],
+          "dependencies": []
+        },
+        "charset-normalizer": {
+          "version": "3.5.2",
+          "compatible_wheels": [
+            "charset_normalizer-3.5.2-cp313-cp313-win_amd64.whl",
+            "charset_normalizer-3.5.2-cp37-abi3-win_amd64.whl",
+            "charset_normalizer-3.5.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2"
+          ],
+          "dependencies": []
+        },
+        "idna": {
+          "version": "3.20",
+          "compatible_wheels": [
+            "idna-3.20-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2.5"
+          ],
+          "dependencies": []
+        },
+        "urllib3": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "urllib3-2.8.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<3,>=1.26"
+          ],
+          "dependencies": []
+        },
+        "certifi": {
+          "version": "2026.10.23",
+          "compatible_wheels": [
+            "certifi-2026.10.23-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2023.5.7"
+          ],
+          "dependencies": []
+        },
+        "pyreadline3": {
+          "version": "3.5.6",
+          "compatible_wheels": [
+            "pyreadline3-3.5.6-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        }
+      }
+    },
+    "gigaam-v3/3.12": {
+      "status": "metadata-compatible",
+      "packages": {
+        "torch": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "torch-2.8.0-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.8.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "typing-extensions>=4.10.0",
+            "setuptools; python_version >= \"3.12\"",
+            "sympy>=1.13.3",
+            "networkx",
+            "jinja2",
+            "fsspec"
+          ]
+        },
+        "torchaudio": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "torchaudio-2.8.0-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.8.0"
+          ],
+          "dependencies": [
+            "torch==2.8.0"
+          ]
+        },
+        "transformers": {
+          "version": "4.57.1",
+          "compatible_wheels": [
+            "transformers-4.57.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==4.57.1"
+          ],
+          "dependencies": [
+            "filelock",
+            "huggingface-hub<1.0,>=0.34.0",
+            "numpy>=1.17",
+            "packaging>=20.0",
+            "pyyaml>=5.1",
+            "regex!=2019.12.17",
+            "requests",
+            "tokenizers<=0.23.0,>=0.22.0",
+            "safetensors>=0.4.3",
+            "tqdm>=4.27"
+          ]
+        },
+        "hydra-core": {
+          "version": "1.3.2",
+          "compatible_wheels": [
+            "hydra_core-1.3.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.3.2"
+          ],
+          "dependencies": [
+            "omegaconf (<2.4,>=2.2)",
+            "antlr4-python3-runtime (==4.9.*)",
+            "packaging"
+          ]
+        },
+        "omegaconf": {
+          "version": "2.3.0",
+          "compatible_wheels": [
+            "omegaconf-2.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.3.0"
+          ],
+          "dependencies": [
+            "antlr4-python3-runtime (==4.9.*)",
+            "PyYAML (>=5.1.0)"
+          ]
+        },
+        "antlr4-python3-runtime": {
+          "version": "4.9.3",
+          "compatible_wheels": [],
+          "source_only_exception": [
+            "antlr4-python3-runtime-4.9.3.tar.gz"
+          ],
+          "constraints": [
+            "==4.9.3"
+          ],
+          "dependencies": []
+        },
+        "sentencepiece": {
+          "version": "0.2.1",
+          "compatible_wheels": [
+            "sentencepiece-0.2.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.2.1"
+          ],
+          "dependencies": []
+        },
+        "soundfile": {
+          "version": "0.13.1",
+          "compatible_wheels": [
+            "soundfile-0.13.1-py2.py3-none-any.whl",
+            "soundfile-0.13.1-py2.py3-none-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.13.1"
+          ],
+          "dependencies": [
+            "cffi>=1.0",
+            "numpy"
+          ]
+        },
+        "av": {
+          "version": "16.0.1",
+          "compatible_wheels": [
+            "av-16.0.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==16.0.1"
+          ],
+          "dependencies": []
+        },
+        "numpy": {
+          "version": "2.2.6",
+          "compatible_wheels": [
+            "numpy-2.2.6-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.2.6"
+          ],
+          "dependencies": []
+        },
+        "psutil": {
+          "version": "7.2.2",
+          "compatible_wheels": [
+            "psutil-7.2.2-cp37-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==7.2.2"
+          ],
+          "dependencies": []
+        },
+        "tokenizers": {
+          "version": "0.22.1",
+          "compatible_wheels": [
+            "tokenizers-0.22.1-cp39-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.22.1"
+          ],
+          "dependencies": [
+            "huggingface-hub<2.0,>=0.16.4"
+          ]
+        },
+        "huggingface-hub": {
+          "version": "0.36.0",
+          "compatible_wheels": [
+            "huggingface_hub-0.36.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.36.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "fsspec>=2023.5.0",
+            "packaging>=20.9",
+            "pyyaml>=5.1",
+            "requests",
+            "tqdm>=4.42.1",
+            "typing-extensions>=3.7.4.3"
+          ]
+        },
+        "filelock": {
+          "version": "4.2.9",
+          "compatible_wheels": [
+            "filelock-4.2.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "typing-extensions": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "typing_extensions-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.10.0"
+          ],
+          "dependencies": []
+        },
+        "setuptools": {
+          "version": "84.2.1",
+          "compatible_wheels": [
+            "setuptools-84.2.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "sympy": {
+          "version": "1.14.0",
+          "compatible_wheels": [
+            "sympy-1.14.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.13.3"
+          ],
+          "dependencies": [
+            "mpmath<1.4,>=1.1.0"
+          ]
+        },
+        "networkx": {
+          "version": "3.7",
+          "compatible_wheels": [
+            "networkx-3.7-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "jinja2": {
+          "version": "3.1.6",
+          "compatible_wheels": [
+            "jinja2-3.1.6-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "MarkupSafe>=2.0"
+          ]
+        },
+        "fsspec": {
+          "version": "2026.9.0",
+          "compatible_wheels": [
+            "fsspec-2026.9.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "packaging": {
+          "version": "26.3",
+          "compatible_wheels": [
+            "packaging-26.3-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=20.0"
+          ],
+          "dependencies": []
+        },
+        "pyyaml": {
+          "version": "6.0.3",
+          "compatible_wheels": [
+            "pyyaml-6.0.3-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=5.1"
+          ],
+          "dependencies": []
+        },
+        "regex": {
+          "version": "2026.11.7",
+          "compatible_wheels": [
+            "regex-2026.11.7-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "!=2019.12.17"
+          ],
+          "dependencies": []
+        },
+        "requests": {
+          "version": "2.34.2",
+          "compatible_wheels": [
+            "requests-2.34.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "charset_normalizer<4,>=2",
+            "idna<4,>=2.5",
+            "urllib3<3,>=1.26",
+            "certifi>=2023.5.7"
+          ]
+        },
+        "safetensors": {
+          "version": "0.8.0",
+          "compatible_wheels": [
+            "safetensors-0.8.0-cp310-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.4.3"
+          ],
+          "dependencies": []
+        },
+        "tqdm": {
+          "version": "4.70.1",
+          "compatible_wheels": [
+            "tqdm-4.70.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.27"
+          ],
+          "dependencies": [
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "cffi": {
+          "version": "2.1.1",
+          "compatible_wheels": [
+            "cffi-2.1.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.0"
+          ],
+          "dependencies": [
+            "pycparser; implementation_name != \"PyPy\""
+          ]
+        },
+        "mpmath": {
+          "version": "1.3.0",
+          "compatible_wheels": [
+            "mpmath-1.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1.4,>=1.1.0"
+          ],
+          "dependencies": []
+        },
+        "markupsafe": {
+          "version": "3.0.4",
+          "compatible_wheels": [
+            "markupsafe-3.0.4-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.0"
+          ],
+          "dependencies": []
+        },
+        "charset-normalizer": {
+          "version": "3.5.2",
+          "compatible_wheels": [
+            "charset_normalizer-3.5.2-cp312-cp312-win_amd64.whl",
+            "charset_normalizer-3.5.2-cp37-abi3-win_amd64.whl",
+            "charset_normalizer-3.5.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2"
+          ],
+          "dependencies": []
+        },
+        "idna": {
+          "version": "3.20",
+          "compatible_wheels": [
+            "idna-3.20-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2.5"
+          ],
+          "dependencies": []
+        },
+        "urllib3": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "urllib3-2.8.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<3,>=1.26"
+          ],
+          "dependencies": []
+        },
+        "certifi": {
+          "version": "2026.10.23",
+          "compatible_wheels": [
+            "certifi-2026.10.23-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2023.5.7"
+          ],
+          "dependencies": []
+        },
+        "colorama": {
+          "version": "0.4.6",
+          "compatible_wheels": [
+            "colorama-0.4.6-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "pycparser": {
+          "version": "3.12",
+          "compatible_wheels": [
+            "pycparser-3.12-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        }
+      }
+    },
+    "gigaam-v3/3.13": {
+      "status": "metadata-compatible",
+      "packages": {
+        "torch": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "torch-2.8.0-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.8.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "typing-extensions>=4.10.0",
+            "setuptools; python_version >= \"3.12\"",
+            "sympy>=1.13.3",
+            "networkx",
+            "jinja2",
+            "fsspec"
+          ]
+        },
+        "torchaudio": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "torchaudio-2.8.0-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.8.0"
+          ],
+          "dependencies": [
+            "torch==2.8.0"
+          ]
+        },
+        "transformers": {
+          "version": "4.57.1",
+          "compatible_wheels": [
+            "transformers-4.57.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==4.57.1"
+          ],
+          "dependencies": [
+            "filelock",
+            "huggingface-hub<1.0,>=0.34.0",
+            "numpy>=1.17",
+            "packaging>=20.0",
+            "pyyaml>=5.1",
+            "regex!=2019.12.17",
+            "requests",
+            "tokenizers<=0.23.0,>=0.22.0",
+            "safetensors>=0.4.3",
+            "tqdm>=4.27"
+          ]
+        },
+        "hydra-core": {
+          "version": "1.3.2",
+          "compatible_wheels": [
+            "hydra_core-1.3.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.3.2"
+          ],
+          "dependencies": [
+            "omegaconf (<2.4,>=2.2)",
+            "antlr4-python3-runtime (==4.9.*)",
+            "packaging"
+          ]
+        },
+        "omegaconf": {
+          "version": "2.3.0",
+          "compatible_wheels": [
+            "omegaconf-2.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.3.0"
+          ],
+          "dependencies": [
+            "antlr4-python3-runtime (==4.9.*)",
+            "PyYAML (>=5.1.0)"
+          ]
+        },
+        "antlr4-python3-runtime": {
+          "version": "4.9.3",
+          "compatible_wheels": [],
+          "source_only_exception": [
+            "antlr4-python3-runtime-4.9.3.tar.gz"
+          ],
+          "constraints": [
+            "==4.9.3"
+          ],
+          "dependencies": []
+        },
+        "sentencepiece": {
+          "version": "0.2.1",
+          "compatible_wheels": [
+            "sentencepiece-0.2.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.2.1"
+          ],
+          "dependencies": []
+        },
+        "soundfile": {
+          "version": "0.13.1",
+          "compatible_wheels": [
+            "soundfile-0.13.1-py2.py3-none-any.whl",
+            "soundfile-0.13.1-py2.py3-none-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.13.1"
+          ],
+          "dependencies": [
+            "cffi>=1.0",
+            "numpy"
+          ]
+        },
+        "av": {
+          "version": "16.0.1",
+          "compatible_wheels": [
+            "av-16.0.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==16.0.1"
+          ],
+          "dependencies": []
+        },
+        "numpy": {
+          "version": "2.2.6",
+          "compatible_wheels": [
+            "numpy-2.2.6-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.2.6"
+          ],
+          "dependencies": []
+        },
+        "psutil": {
+          "version": "7.2.2",
+          "compatible_wheels": [
+            "psutil-7.2.2-cp37-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==7.2.2"
+          ],
+          "dependencies": []
+        },
+        "tokenizers": {
+          "version": "0.22.1",
+          "compatible_wheels": [
+            "tokenizers-0.22.1-cp39-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.22.1"
+          ],
+          "dependencies": [
+            "huggingface-hub<2.0,>=0.16.4"
+          ]
+        },
+        "huggingface-hub": {
+          "version": "0.36.0",
+          "compatible_wheels": [
+            "huggingface_hub-0.36.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.36.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "fsspec>=2023.5.0",
+            "packaging>=20.9",
+            "pyyaml>=5.1",
+            "requests",
+            "tqdm>=4.42.1",
+            "typing-extensions>=3.7.4.3"
+          ]
+        },
+        "filelock": {
+          "version": "4.2.9",
+          "compatible_wheels": [
+            "filelock-4.2.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "typing-extensions": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "typing_extensions-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.10.0"
+          ],
+          "dependencies": []
+        },
+        "setuptools": {
+          "version": "84.2.1",
+          "compatible_wheels": [
+            "setuptools-84.2.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "sympy": {
+          "version": "1.14.0",
+          "compatible_wheels": [
+            "sympy-1.14.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.13.3"
+          ],
+          "dependencies": [
+            "mpmath<1.4,>=1.1.0"
+          ]
+        },
+        "networkx": {
+          "version": "3.7",
+          "compatible_wheels": [
+            "networkx-3.7-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "jinja2": {
+          "version": "3.1.6",
+          "compatible_wheels": [
+            "jinja2-3.1.6-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "MarkupSafe>=2.0"
+          ]
+        },
+        "fsspec": {
+          "version": "2026.9.0",
+          "compatible_wheels": [
+            "fsspec-2026.9.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "packaging": {
+          "version": "26.3",
+          "compatible_wheels": [
+            "packaging-26.3-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=20.0"
+          ],
+          "dependencies": []
+        },
+        "pyyaml": {
+          "version": "6.0.3",
+          "compatible_wheels": [
+            "pyyaml-6.0.3-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=5.1"
+          ],
+          "dependencies": []
+        },
+        "regex": {
+          "version": "2026.11.7",
+          "compatible_wheels": [
+            "regex-2026.11.7-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "!=2019.12.17"
+          ],
+          "dependencies": []
+        },
+        "requests": {
+          "version": "2.34.2",
+          "compatible_wheels": [
+            "requests-2.34.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "charset_normalizer<4,>=2",
+            "idna<4,>=2.5",
+            "urllib3<3,>=1.26",
+            "certifi>=2023.5.7"
+          ]
+        },
+        "safetensors": {
+          "version": "0.8.0",
+          "compatible_wheels": [
+            "safetensors-0.8.0-cp310-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.4.3"
+          ],
+          "dependencies": []
+        },
+        "tqdm": {
+          "version": "4.70.1",
+          "compatible_wheels": [
+            "tqdm-4.70.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.27"
+          ],
+          "dependencies": [
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "cffi": {
+          "version": "2.1.1",
+          "compatible_wheels": [
+            "cffi-2.1.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.0"
+          ],
+          "dependencies": [
+            "pycparser; implementation_name != \"PyPy\""
+          ]
+        },
+        "mpmath": {
+          "version": "1.3.0",
+          "compatible_wheels": [
+            "mpmath-1.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1.4,>=1.1.0"
+          ],
+          "dependencies": []
+        },
+        "markupsafe": {
+          "version": "3.0.4",
+          "compatible_wheels": [
+            "markupsafe-3.0.4-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.0"
+          ],
+          "dependencies": []
+        },
+        "charset-normalizer": {
+          "version": "3.5.2",
+          "compatible_wheels": [
+            "charset_normalizer-3.5.2-cp313-cp313-win_amd64.whl",
+            "charset_normalizer-3.5.2-cp37-abi3-win_amd64.whl",
+            "charset_normalizer-3.5.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2"
+          ],
+          "dependencies": []
+        },
+        "idna": {
+          "version": "3.20",
+          "compatible_wheels": [
+            "idna-3.20-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<4,>=2.5"
+          ],
+          "dependencies": []
+        },
+        "urllib3": {
+          "version": "2.8.0",
+          "compatible_wheels": [
+            "urllib3-2.8.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<3,>=1.26"
+          ],
+          "dependencies": []
+        },
+        "certifi": {
+          "version": "2026.10.23",
+          "compatible_wheels": [
+            "certifi-2026.10.23-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2023.5.7"
+          ],
+          "dependencies": []
+        },
+        "colorama": {
+          "version": "0.4.6",
+          "compatible_wheels": [
+            "colorama-0.4.6-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "pycparser": {
+          "version": "3.12",
+          "compatible_wheels": [
+            "pycparser-3.12-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        }
+      }
+    },
+    "gigaam-multi/3.12": {
+      "status": "metadata-compatible",
+      "packages": {
+        "torch": {
+          "version": "2.10.0",
+          "compatible_wheels": [
+            "torch-2.10.0-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.10.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "typing-extensions>=4.10.0",
+            "setuptools; python_version >= \"3.12\"",
+            "sympy>=1.13.3",
+            "networkx>=2.5.1",
+            "jinja2",
+            "fsspec>=0.8.5"
+          ]
+        },
+        "torchaudio": {
+          "version": "2.10.0",
+          "compatible_wheels": [
+            "torchaudio-2.10.0-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.10.0"
+          ],
+          "dependencies": [
+            "torch==2.10.0"
+          ]
+        },
+        "transformers": {
+          "version": "5.0.0",
+          "compatible_wheels": [
+            "transformers-5.0.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==5.0.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "huggingface-hub<2.0,>=1.3.0",
+            "numpy>=1.17",
+            "packaging>=20.0",
+            "pyyaml>=5.1",
+            "regex!=2019.12.17",
+            "tokenizers<=0.23.0,>=0.22.0",
+            "typer-slim",
+            "safetensors>=0.4.3",
+            "tqdm>=4.27"
+          ]
+        },
+        "hydra-core": {
+          "version": "1.3.2",
+          "compatible_wheels": [
+            "hydra_core-1.3.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.3.2"
+          ],
+          "dependencies": [
+            "omegaconf (<2.4,>=2.2)",
+            "antlr4-python3-runtime (==4.9.*)",
+            "packaging"
+          ]
+        },
+        "omegaconf": {
+          "version": "2.3.0",
+          "compatible_wheels": [
+            "omegaconf-2.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.3.0"
+          ],
+          "dependencies": [
+            "antlr4-python3-runtime (==4.9.*)",
+            "PyYAML (>=5.1.0)"
+          ]
+        },
+        "antlr4-python3-runtime": {
+          "version": "4.9.3",
+          "compatible_wheels": [],
+          "source_only_exception": [
+            "antlr4-python3-runtime-4.9.3.tar.gz"
+          ],
+          "constraints": [
+            "==4.9.3"
+          ],
+          "dependencies": []
+        },
+        "sentencepiece": {
+          "version": "0.2.1",
+          "compatible_wheels": [
+            "sentencepiece-0.2.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.2.1"
+          ],
+          "dependencies": []
+        },
+        "soundfile": {
+          "version": "0.13.1",
+          "compatible_wheels": [
+            "soundfile-0.13.1-py2.py3-none-any.whl",
+            "soundfile-0.13.1-py2.py3-none-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.13.1"
+          ],
+          "dependencies": [
+            "cffi>=1.0",
+            "numpy"
+          ]
+        },
+        "av": {
+          "version": "16.0.1",
+          "compatible_wheels": [
+            "av-16.0.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==16.0.1"
+          ],
+          "dependencies": []
+        },
+        "numpy": {
+          "version": "2.2.6",
+          "compatible_wheels": [
+            "numpy-2.2.6-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.2.6"
+          ],
+          "dependencies": []
+        },
+        "psutil": {
+          "version": "7.2.2",
+          "compatible_wheels": [
+            "psutil-7.2.2-cp37-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==7.2.2"
+          ],
+          "dependencies": []
+        },
+        "tokenizers": {
+          "version": "0.22.1",
+          "compatible_wheels": [
+            "tokenizers-0.22.1-cp39-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.22.1"
+          ],
+          "dependencies": [
+            "huggingface-hub<2.0,>=0.16.4"
+          ]
+        },
+        "huggingface-hub": {
+          "version": "1.3.5",
+          "compatible_wheels": [
+            "huggingface_hub-1.3.5-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.3.5"
+          ],
+          "dependencies": [
+            "filelock",
+            "fsspec>=2023.5.0",
+            "hf-xet<2.0.0,>=1.2.0; platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\"",
+            "httpx<1,>=0.23.0",
+            "packaging>=20.9",
+            "pyyaml>=5.1",
+            "shellingham",
+            "tqdm>=4.42.1",
+            "typer-slim",
+            "typing-extensions>=4.1.0"
+          ]
+        },
+        "filelock": {
+          "version": "4.2.9",
+          "compatible_wheels": [
+            "filelock-4.2.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "typing-extensions": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "typing_extensions-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.10.0"
+          ],
+          "dependencies": []
+        },
+        "setuptools": {
+          "version": "84.2.1",
+          "compatible_wheels": [
+            "setuptools-84.2.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "sympy": {
+          "version": "1.14.0",
+          "compatible_wheels": [
+            "sympy-1.14.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.13.3"
+          ],
+          "dependencies": [
+            "mpmath<1.4,>=1.1.0"
+          ]
+        },
+        "networkx": {
+          "version": "3.7",
+          "compatible_wheels": [
+            "networkx-3.7-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.5.1"
+          ],
+          "dependencies": []
+        },
+        "jinja2": {
+          "version": "3.1.6",
+          "compatible_wheels": [
+            "jinja2-3.1.6-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "MarkupSafe>=2.0"
+          ]
+        },
+        "fsspec": {
+          "version": "2026.9.0",
+          "compatible_wheels": [
+            "fsspec-2026.9.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.8.5"
+          ],
+          "dependencies": []
+        },
+        "packaging": {
+          "version": "26.3",
+          "compatible_wheels": [
+            "packaging-26.3-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=20.0"
+          ],
+          "dependencies": []
+        },
+        "pyyaml": {
+          "version": "6.0.3",
+          "compatible_wheels": [
+            "pyyaml-6.0.3-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=5.1"
+          ],
+          "dependencies": []
+        },
+        "regex": {
+          "version": "2026.11.7",
+          "compatible_wheels": [
+            "regex-2026.11.7-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "!=2019.12.17"
+          ],
+          "dependencies": []
+        },
+        "typer-slim": {
+          "version": "0.24.0",
+          "compatible_wheels": [
+            "typer_slim-0.24.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "typer>=0.24.0"
+          ]
+        },
+        "safetensors": {
+          "version": "0.8.0",
+          "compatible_wheels": [
+            "safetensors-0.8.0-cp310-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.4.3"
+          ],
+          "dependencies": []
+        },
+        "tqdm": {
+          "version": "4.70.1",
+          "compatible_wheels": [
+            "tqdm-4.70.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.27"
+          ],
+          "dependencies": [
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "cffi": {
+          "version": "2.1.1",
+          "compatible_wheels": [
+            "cffi-2.1.1-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.0"
+          ],
+          "dependencies": [
+            "pycparser; implementation_name != \"PyPy\""
+          ]
+        },
+        "hf-xet": {
+          "version": "1.8.0",
+          "compatible_wheels": [
+            "hf_xet-1.8.0-cp38-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<2.0.0,>=1.2.0"
+          ],
+          "dependencies": []
+        },
+        "httpx": {
+          "version": "0.28.1",
+          "compatible_wheels": [
+            "httpx-0.28.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1,>=0.23.0"
+          ],
+          "dependencies": [
+            "anyio",
+            "certifi",
+            "httpcore==1.*",
+            "idna"
+          ]
+        },
+        "shellingham": {
+          "version": "1.5.4",
+          "compatible_wheels": [
+            "shellingham-1.5.4-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "mpmath": {
+          "version": "1.3.0",
+          "compatible_wheels": [
+            "mpmath-1.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1.4,>=1.1.0"
+          ],
+          "dependencies": []
+        },
+        "markupsafe": {
+          "version": "3.0.4",
+          "compatible_wheels": [
+            "markupsafe-3.0.4-cp312-cp312-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.0"
+          ],
+          "dependencies": []
+        },
+        "typer": {
+          "version": "0.28.0",
+          "compatible_wheels": [
+            "typer-0.28.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.24.0"
+          ],
+          "dependencies": [
+            "shellingham>=1.3.0",
+            "rich>=13.8.0",
+            "annotated-doc>=0.0.2",
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "colorama": {
+          "version": "0.4.6",
+          "compatible_wheels": [
+            "colorama-0.4.6-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "pycparser": {
+          "version": "3.12",
+          "compatible_wheels": [
+            "pycparser-3.12-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "anyio": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "anyio-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "idna>=2.8",
+            "typing_extensions>=4.16.0; python_version < \"3.15\""
+          ]
+        },
+        "certifi": {
+          "version": "2026.10.23",
+          "compatible_wheels": [
+            "certifi-2026.10.23-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "httpcore": {
+          "version": "1.0.9",
+          "compatible_wheels": [
+            "httpcore-1.0.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.*"
+          ],
+          "dependencies": [
+            "certifi",
+            "h11>=0.16"
+          ]
+        },
+        "idna": {
+          "version": "3.20",
+          "compatible_wheels": [
+            "idna-3.20-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "rich": {
+          "version": "15.0.0",
+          "compatible_wheels": [
+            "rich-15.0.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=13.8.0"
+          ],
+          "dependencies": [
+            "markdown-it-py>=2.2.0",
+            "pygments<3.0.0,>=2.13.0"
+          ]
+        },
+        "annotated-doc": {
+          "version": "0.0.5",
+          "compatible_wheels": [
+            "annotated_doc-0.0.5-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.0.2"
+          ],
+          "dependencies": []
+        },
+        "h11": {
+          "version": "0.16.0",
+          "compatible_wheels": [
+            "h11-0.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.16"
+          ],
+          "dependencies": []
+        },
+        "markdown-it-py": {
+          "version": "4.2.0",
+          "compatible_wheels": [
+            "markdown_it_py-4.2.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.2.0"
+          ],
+          "dependencies": [
+            "mdurl~=0.1"
+          ]
+        },
+        "pygments": {
+          "version": "2.21.0",
+          "compatible_wheels": [
+            "pygments-2.21.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<3.0.0,>=2.13.0"
+          ],
+          "dependencies": []
+        },
+        "mdurl": {
+          "version": "0.1.2",
+          "compatible_wheels": [
+            "mdurl-0.1.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "~=0.1"
+          ],
+          "dependencies": []
+        }
+      }
+    },
+    "gigaam-multi/3.13": {
+      "status": "metadata-compatible",
+      "packages": {
+        "torch": {
+          "version": "2.10.0",
+          "compatible_wheels": [
+            "torch-2.10.0-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.10.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "typing-extensions>=4.10.0",
+            "setuptools; python_version >= \"3.12\"",
+            "sympy>=1.13.3",
+            "networkx>=2.5.1",
+            "jinja2",
+            "fsspec>=0.8.5"
+          ]
+        },
+        "torchaudio": {
+          "version": "2.10.0",
+          "compatible_wheels": [
+            "torchaudio-2.10.0-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.10.0"
+          ],
+          "dependencies": [
+            "torch==2.10.0"
+          ]
+        },
+        "transformers": {
+          "version": "5.0.0",
+          "compatible_wheels": [
+            "transformers-5.0.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==5.0.0"
+          ],
+          "dependencies": [
+            "filelock",
+            "huggingface-hub<2.0,>=1.3.0",
+            "numpy>=1.17",
+            "packaging>=20.0",
+            "pyyaml>=5.1",
+            "regex!=2019.12.17",
+            "tokenizers<=0.23.0,>=0.22.0",
+            "typer-slim",
+            "safetensors>=0.4.3",
+            "tqdm>=4.27"
+          ]
+        },
+        "hydra-core": {
+          "version": "1.3.2",
+          "compatible_wheels": [
+            "hydra_core-1.3.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.3.2"
+          ],
+          "dependencies": [
+            "omegaconf (<2.4,>=2.2)",
+            "antlr4-python3-runtime (==4.9.*)",
+            "packaging"
+          ]
+        },
+        "omegaconf": {
+          "version": "2.3.0",
+          "compatible_wheels": [
+            "omegaconf-2.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.3.0"
+          ],
+          "dependencies": [
+            "antlr4-python3-runtime (==4.9.*)",
+            "PyYAML (>=5.1.0)"
+          ]
+        },
+        "antlr4-python3-runtime": {
+          "version": "4.9.3",
+          "compatible_wheels": [],
+          "source_only_exception": [
+            "antlr4-python3-runtime-4.9.3.tar.gz"
+          ],
+          "constraints": [
+            "==4.9.3"
+          ],
+          "dependencies": []
+        },
+        "sentencepiece": {
+          "version": "0.2.1",
+          "compatible_wheels": [
+            "sentencepiece-0.2.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.2.1"
+          ],
+          "dependencies": []
+        },
+        "soundfile": {
+          "version": "0.13.1",
+          "compatible_wheels": [
+            "soundfile-0.13.1-py2.py3-none-any.whl",
+            "soundfile-0.13.1-py2.py3-none-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.13.1"
+          ],
+          "dependencies": [
+            "cffi>=1.0",
+            "numpy"
+          ]
+        },
+        "av": {
+          "version": "16.0.1",
+          "compatible_wheels": [
+            "av-16.0.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==16.0.1"
+          ],
+          "dependencies": []
+        },
+        "numpy": {
+          "version": "2.2.6",
+          "compatible_wheels": [
+            "numpy-2.2.6-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==2.2.6"
+          ],
+          "dependencies": []
+        },
+        "psutil": {
+          "version": "7.2.2",
+          "compatible_wheels": [
+            "psutil-7.2.2-cp37-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==7.2.2"
+          ],
+          "dependencies": []
+        },
+        "tokenizers": {
+          "version": "0.22.1",
+          "compatible_wheels": [
+            "tokenizers-0.22.1-cp39-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==0.22.1"
+          ],
+          "dependencies": [
+            "huggingface-hub<2.0,>=0.16.4"
+          ]
+        },
+        "huggingface-hub": {
+          "version": "1.3.5",
+          "compatible_wheels": [
+            "huggingface_hub-1.3.5-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.3.5"
+          ],
+          "dependencies": [
+            "filelock",
+            "fsspec>=2023.5.0",
+            "hf-xet<2.0.0,>=1.2.0; platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"arm64\" or platform_machine == \"aarch64\"",
+            "httpx<1,>=0.23.0",
+            "packaging>=20.9",
+            "pyyaml>=5.1",
+            "shellingham",
+            "tqdm>=4.42.1",
+            "typer-slim",
+            "typing-extensions>=4.1.0"
+          ]
+        },
+        "filelock": {
+          "version": "4.2.9",
+          "compatible_wheels": [
+            "filelock-4.2.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "typing-extensions": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "typing_extensions-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.10.0"
+          ],
+          "dependencies": []
+        },
+        "setuptools": {
+          "version": "84.2.1",
+          "compatible_wheels": [
+            "setuptools-84.2.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "sympy": {
+          "version": "1.14.0",
+          "compatible_wheels": [
+            "sympy-1.14.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.13.3"
+          ],
+          "dependencies": [
+            "mpmath<1.4,>=1.1.0"
+          ]
+        },
+        "networkx": {
+          "version": "3.7",
+          "compatible_wheels": [
+            "networkx-3.7-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.5.1"
+          ],
+          "dependencies": []
+        },
+        "jinja2": {
+          "version": "3.1.6",
+          "compatible_wheels": [
+            "jinja2-3.1.6-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "MarkupSafe>=2.0"
+          ]
+        },
+        "fsspec": {
+          "version": "2026.9.0",
+          "compatible_wheels": [
+            "fsspec-2026.9.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.8.5"
+          ],
+          "dependencies": []
+        },
+        "packaging": {
+          "version": "26.3",
+          "compatible_wheels": [
+            "packaging-26.3-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=20.0"
+          ],
+          "dependencies": []
+        },
+        "pyyaml": {
+          "version": "6.0.3",
+          "compatible_wheels": [
+            "pyyaml-6.0.3-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=5.1"
+          ],
+          "dependencies": []
+        },
+        "regex": {
+          "version": "2026.11.7",
+          "compatible_wheels": [
+            "regex-2026.11.7-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "!=2019.12.17"
+          ],
+          "dependencies": []
+        },
+        "typer-slim": {
+          "version": "0.24.0",
+          "compatible_wheels": [
+            "typer_slim-0.24.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "typer>=0.24.0"
+          ]
+        },
+        "safetensors": {
+          "version": "0.8.0",
+          "compatible_wheels": [
+            "safetensors-0.8.0-cp310-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.4.3"
+          ],
+          "dependencies": []
+        },
+        "tqdm": {
+          "version": "4.70.1",
+          "compatible_wheels": [
+            "tqdm-4.70.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=4.27"
+          ],
+          "dependencies": [
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "cffi": {
+          "version": "2.1.1",
+          "compatible_wheels": [
+            "cffi-2.1.1-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=1.0"
+          ],
+          "dependencies": [
+            "pycparser; implementation_name != \"PyPy\""
+          ]
+        },
+        "hf-xet": {
+          "version": "1.8.0",
+          "compatible_wheels": [
+            "hf_xet-1.8.0-cp38-abi3-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<2.0.0,>=1.2.0"
+          ],
+          "dependencies": []
+        },
+        "httpx": {
+          "version": "0.28.1",
+          "compatible_wheels": [
+            "httpx-0.28.1-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1,>=0.23.0"
+          ],
+          "dependencies": [
+            "anyio",
+            "certifi",
+            "httpcore==1.*",
+            "idna"
+          ]
+        },
+        "shellingham": {
+          "version": "1.5.4",
+          "compatible_wheels": [
+            "shellingham-1.5.4-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "mpmath": {
+          "version": "1.3.0",
+          "compatible_wheels": [
+            "mpmath-1.3.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<1.4,>=1.1.0"
+          ],
+          "dependencies": []
+        },
+        "markupsafe": {
+          "version": "3.0.4",
+          "compatible_wheels": [
+            "markupsafe-3.0.4-cp313-cp313-win_amd64.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.0"
+          ],
+          "dependencies": []
+        },
+        "typer": {
+          "version": "0.28.0",
+          "compatible_wheels": [
+            "typer-0.28.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.24.0"
+          ],
+          "dependencies": [
+            "shellingham>=1.3.0",
+            "rich>=13.8.0",
+            "annotated-doc>=0.0.2",
+            "colorama; platform_system == \"Windows\""
+          ]
+        },
+        "colorama": {
+          "version": "0.4.6",
+          "compatible_wheels": [
+            "colorama-0.4.6-py2.py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "pycparser": {
+          "version": "3.12",
+          "compatible_wheels": [
+            "pycparser-3.12-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "anyio": {
+          "version": "4.16.0",
+          "compatible_wheels": [
+            "anyio-4.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": [
+            "idna>=2.8",
+            "typing_extensions>=4.16.0; python_version < \"3.15\""
+          ]
+        },
+        "certifi": {
+          "version": "2026.10.23",
+          "compatible_wheels": [
+            "certifi-2026.10.23-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "httpcore": {
+          "version": "1.0.9",
+          "compatible_wheels": [
+            "httpcore-1.0.9-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "==1.*"
+          ],
+          "dependencies": [
+            "certifi",
+            "h11>=0.16"
+          ]
+        },
+        "idna": {
+          "version": "3.20",
+          "compatible_wheels": [
+            "idna-3.20-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ""
+          ],
+          "dependencies": []
+        },
+        "rich": {
+          "version": "15.0.0",
+          "compatible_wheels": [
+            "rich-15.0.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=13.8.0"
+          ],
+          "dependencies": [
+            "markdown-it-py>=2.2.0",
+            "pygments<3.0.0,>=2.13.0"
+          ]
+        },
+        "annotated-doc": {
+          "version": "0.0.5",
+          "compatible_wheels": [
+            "annotated_doc-0.0.5-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.0.2"
+          ],
+          "dependencies": []
+        },
+        "h11": {
+          "version": "0.16.0",
+          "compatible_wheels": [
+            "h11-0.16.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=0.16"
+          ],
+          "dependencies": []
+        },
+        "markdown-it-py": {
+          "version": "4.2.0",
+          "compatible_wheels": [
+            "markdown_it_py-4.2.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            ">=2.2.0"
+          ],
+          "dependencies": [
+            "mdurl~=0.1"
+          ]
+        },
+        "pygments": {
+          "version": "2.21.0",
+          "compatible_wheels": [
+            "pygments-2.21.0-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "<3.0.0,>=2.13.0"
+          ],
+          "dependencies": []
+        },
+        "mdurl": {
+          "version": "0.1.2",
+          "compatible_wheels": [
+            "mdurl-0.1.2-py3-none-any.whl"
+          ],
+          "source_only_exception": [],
+          "constraints": [
+            "~=0.1"
+          ],
+          "dependencies": []
+        }
+      }
+    }
+  },
+  "model_revisions": {
+    "whisper": {
+      "repository": "Systran/faster-whisper-small",
+      "revision": "main",
+      "commit": "536b0662742c02347bc0e980a01041f333bce120"
+    },
+    "gigaam-v3": {
+      "repository": "ai-sage/GigaAM-v3",
+      "revision": "ctc",
+      "commit": "15ef3b5a88da78f93134b3cb7f015c70aefa8946"
+    },
+    "gigaam-multi": {
+      "repository": "ai-sage/GigaAM-Multilingual",
+      "revision": "ctc",
+      "commit": "2f8a57144e6ec3adfd32fe0484d9ea9913305bc8"
+    }
+  }
+}

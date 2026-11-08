@@ -1,0 +1,9 @@
+.venvs/
+models/
+results/
+data/
+__pycache__/
+*.pyc
+.cache/
+.checks/
+.benchmark.lock

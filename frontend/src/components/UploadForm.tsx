@@ -52,7 +52,7 @@ export function UploadForm(props: Props) {
         onChange={(event) => { if (event.currentTarget.files) select(event.currentTarget.files); event.currentTarget.value = ''; }} />
       <button className="button secondary" type="button" disabled={busy} onClick={() => { if (!busy) input.current?.click(); }}>{source ? 'Заменить файл' : 'Выбрать файл'}</button>
     </div>
-    <p className="small-note">Форматы и ограничения загрузки будут согласованы с сервисом обработки. Сейчас файл остаётся в браузере.</p>
+    <p className="small-note">Файл остаётся в браузере до запуска транскрибации. Для ASR поддерживается только WAV; ограничения маскирования будут согласованы отдельно.</p>
     {source ? <div className="file-summary" key={`${source.name}:${source.lastModified}:${source.size}`}>
       <div className="file-line"><div className="file-info"><strong>{source.name}</strong><span>{sizeLabel(source.size)} <span aria-hidden="true">·</span> {durationLabel(duration)}</span></div>
         <button type="button" className="text-button danger" disabled={busy} onClick={() => { if (!busy) props.onClear(); }}>Удалить файл</button>

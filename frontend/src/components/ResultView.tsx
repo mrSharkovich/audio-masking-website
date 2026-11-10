@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { RefObject } from 'react';
-import type { AudioAdapters, AudioResult, DemoSettings } from '../types/audio';
+import type { AudioAdapters, AudioLanguage, AudioResult, DemoSettings } from '../types/audio';
 import { AudioPlayer } from './AudioPlayer';
 import { QualityPanel } from './QualityPanel';
 import { TranscriptionPanel } from './TranscriptionPanel';
@@ -12,6 +12,8 @@ interface Props {
   resultUrl?: string;
   adapters: AudioAdapters;
   settings: DemoSettings;
+  audioLanguage: AudioLanguage;
+  onAudioLanguageChange: (language: AudioLanguage) => void;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onForm: () => void;
   onNew: () => void;
@@ -48,7 +50,7 @@ export function ResultView(props: Props) {
     </div>
     <div className="additional-tools" key={props.result.id}>
       <QualityPanel resultId={props.result.id} adapter={props.adapters.quality} settings={props.settings} />
-      <TranscriptionPanel resultId={props.result.id} adapter={props.adapters.transcription} settings={props.settings} />
+      <TranscriptionPanel source={props.source} maskedResult={props.result} adapter={props.adapters.transcription} audioLanguage={props.audioLanguage} onAudioLanguageChange={props.onAudioLanguageChange} />
     </div>
   </div>;
 }

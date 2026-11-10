@@ -32,10 +32,10 @@ test('explicit error/unavailable and independent quality results', async () => {
 
 test('transcription only returns selected sources and supports empty/partial', async () => {
   const adapter = createDemoAdapters(0).transcription;
-  assert.deepEqual(Object.keys(await adapter.transcribe('demo', 'original', 'success')), ['original']);
-  assert.deepEqual(Object.keys(await adapter.transcribe('demo', 'masked', 'success')), ['masked']);
-  const partial = await adapter.transcribe('demo', 'both', 'partial');
+  assert.deepEqual(Object.keys(await adapter.transcribe('demo', 'original', 'success', { language: 'ru', model: 'gigaam-multi' })), ['original']);
+  assert.deepEqual(Object.keys(await adapter.transcribe('demo', 'masked', 'success', { language: 'ru', model: 'gigaam-multi' })), ['masked']);
+  const partial = await adapter.transcribe('demo', 'both', 'partial', { language: 'ru', model: 'gigaam-multi' });
   assert.equal(partial.original.status, 'success');
   assert.equal(partial.masked.status, 'unavailable');
-  assert.equal((await adapter.transcribe('demo', 'original', 'empty')).original.status, 'empty');
+  assert.equal((await adapter.transcribe('demo', 'original', 'empty', { language: 'ru', model: 'gigaam-multi' })).original.status, 'empty');
 });

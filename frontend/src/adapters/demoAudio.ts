@@ -1,5 +1,5 @@
 import type {
-  AudioAdapters, AudioResult, DemoOutcome, OperationValue,
+  AsrConfiguration, DemoAudioAdapters, AudioResult, DemoOutcome, OperationValue,
   QualityResult, TranscriptSelection, TranscriptionResult,
 } from '../types/audio';
 
@@ -27,7 +27,7 @@ export function createDemoTone(): Blob {
 
 const wait = (delay: number) => new Promise<void>((resolve) => setTimeout(resolve, delay));
 
-export function createDemoAdapters(delay = 700): AudioAdapters {
+export function createDemoAdapters(delay = 700): DemoAudioAdapters {
   return {
     masking: {
       async run(_source: File, outcome: DemoOutcome): Promise<OperationValue<AudioResult>> {
@@ -60,7 +60,7 @@ export function createDemoAdapters(delay = 700): AudioAdapters {
       },
     },
     transcription: {
-      async transcribe(_resultId: string, selection: TranscriptSelection, outcome: DemoOutcome): Promise<TranscriptionResult> {
+      async transcribe(_resultId: string, selection: TranscriptSelection, outcome: DemoOutcome, _configuration: AsrConfiguration): Promise<TranscriptionResult> {
         await wait(delay);
         const sources = selection === 'both' ? ['original', 'masked'] as const : [selection];
         const response: TranscriptionResult = {};

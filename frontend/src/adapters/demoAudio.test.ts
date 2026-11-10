@@ -22,9 +22,9 @@ describe('isolated demo adapters', () => {
   });
   it('only returns requested sources and supports partial/empty answers', async () => {
     const adapter = createDemoAdapters(0).transcription;
-    expect(await adapter.transcribe('demo', 'original', 'success')).not.toHaveProperty('masked');
-    expect(await adapter.transcribe('demo', 'masked', 'success')).not.toHaveProperty('original');
-    expect((await adapter.transcribe('demo', 'both', 'partial')).masked?.status).toBe('unavailable');
-    expect((await adapter.transcribe('demo', 'original', 'empty')).original?.status).toBe('empty');
+    expect(await adapter.transcribe('demo', 'original', 'success', { language: 'ru', model: 'gigaam-multi' })).not.toHaveProperty('masked');
+    expect(await adapter.transcribe('demo', 'masked', 'success', { language: 'ru', model: 'gigaam-multi' })).not.toHaveProperty('original');
+    expect((await adapter.transcribe('demo', 'both', 'partial', { language: 'ru', model: 'gigaam-multi' })).masked?.status).toBe('unavailable');
+    expect((await adapter.transcribe('demo', 'original', 'empty', { language: 'ru', model: 'gigaam-multi' })).original?.status).toBe('empty');
   });
 });

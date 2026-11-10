@@ -30,7 +30,7 @@ export function useWorkspace(adapter: MaskingAdapter) {
   const run = async (settings: DemoSettings) => {
     if (lock.current || !source) return;
     if (!settings.enabled) {
-      setError('Реальная обработка пока недоступна. Для проверки интерфейса включите демонстрацию.');
+      setError('Реальная обработка недоступна: сервис пока не подключён.');
       return;
     }
     lock.current = true; setBusy(true); setError('');

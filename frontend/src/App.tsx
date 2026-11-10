@@ -4,7 +4,7 @@ import { HomePage } from './pages/HomePage';
 import { ProcessPage } from './pages/ProcessPage';
 import { HowItWorksPage } from './pages/HowItWorksPage';
 import { AboutPage } from './pages/AboutPage';
-import type { AudioAdapters } from './types/audio';
+import type { AudioAdapters, AudioLanguage } from './types/audio';
 
 const pages = [
   { path: '/', label: 'Главная' },
@@ -19,6 +19,7 @@ function Brand() {
 
 export function App({ adapters }: { adapters?: AudioAdapters }) {
   const { theme, toggle } = useTheme();
+  const [audioLanguage, setAudioLanguage] = useState<AudioLanguage>('ru');
   const [path, setPath] = useState(window.location.pathname);
   const main = useRef<HTMLElement>(null);
   const previousPath = useRef(path);
@@ -56,8 +57,8 @@ export function App({ adapters }: { adapters?: AudioAdapters }) {
       <button type="button" className="theme-toggle" onClick={toggle} aria-label="Тёмная тема" aria-pressed={theme === 'dark'}><span aria-hidden="true">{theme === 'dark' ? '☾' : '☀'}</span><span>{theme === 'dark' ? 'Тёмная' : 'Светлая'}</span></button>
     </div></header>
     <main className="page-shell" id="main-content" ref={main} tabIndex={-1}>
-      {path === '/' ? <HomePage /> : path === '/process' ? <ProcessPage adapters={adapters} /> : path === '/how-it-works' ? <HowItWorksPage /> : path === '/about' ? <AboutPage /> : <section className="workspace-section"><h1>Страница не найдена</h1><a href="/">На главную</a></section>}
+      {path === '/' ? <HomePage /> : path === '/process' ? <ProcessPage adapters={adapters} audioLanguage={audioLanguage} onAudioLanguageChange={setAudioLanguage} /> : path === '/how-it-works' ? <HowItWorksPage /> : path === '/about' ? <AboutPage /> : <section className="workspace-section"><h1>Страница не найдена</h1><a href="/">На главную</a></section>}
     </main>
-    <footer className="site-footer"><span>AudioMask</span><p>Исследование маскирования аудиозаписей</p><a href="/process">К рабочей области</a></footer>
+    <footer className="site-footer"><span>AudioMask</span><p>Исследование маскирования аудиозаписей</p></footer>
   </div>;
 }

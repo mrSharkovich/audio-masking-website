@@ -9,7 +9,10 @@ from common import main
 
 def transcribe(audio: Path, weights: Path) -> str:
     # Require complete local assets; do not fall back to a Hub model identifier.
-    for name in ("model.bin", "config.json", "tokenizer.json", "preprocessor_config.json"):
+    # faster-whisper 1.2.1 uses its default FeatureExtractor when the optional
+    # preprocessor_config.json is absent. tokenizer.json is required here to
+    # prevent Tokenizer.from_pretrained's remote fallback.
+    for name in ("model.bin", "config.json", "tokenizer.json", "vocabulary.txt"):
         if not (weights / name).is_file():
             raise FileNotFoundError()
     from faster_whisper import WhisperModel

@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Literal, Protocol
 
 from .config import ModelRuntime, Settings
-from .process import run_worker, WorkerFailed, WorkerTimeout, WorkerUnavailable
+from .process import run_worker, WorkerFailed, WorkerTimeout, WorkerUnavailable, WorkerFfmpegUnavailable
 
 Language = Literal["ru", "en"]
 MODELS = {"ru": "gigaam-multi", "en": "whisper"}
@@ -13,6 +13,10 @@ class AsrUnavailable(Exception):
 
 
 class AsrTimeout(Exception):
+    pass
+
+
+class AsrFfmpegUnavailable(AsrUnavailable):
     pass
 
 
@@ -41,12 +45,17 @@ class ProcessAdapter:
         if (python is None or weights is None or not python.is_absolute() or not weights.is_absolute()
                 or not python.is_file() or not weights.is_dir() or not self.worker.is_file()):
             raise AsrUnavailable()
+        ffmpeg = self.settings.ffmpeg_path if self.language == "ru" else None
+        if self.language == "ru" and (ffmpeg is None or not ffmpeg.is_absolute() or not ffmpeg.is_file()):
+            raise AsrFfmpegUnavailable()
         try:
             response = run_worker(python, self.worker.resolve(),
                                   {"audio": str(audio.resolve()), "weights": str(weights.resolve()), "language": language},
                                   timeout=self.settings.worker_timeout_seconds,
                                   output_limit=self.settings.max_worker_output_bytes,
-                                  cpu_threads=self.settings.cpu_threads)
+                                  cpu_threads=self.settings.cpu_threads, ffmpeg=ffmpeg)
+        except WorkerFfmpegUnavailable as exc:
+            raise AsrFfmpegUnavailable() from exc
         except WorkerUnavailable as exc:
             raise AsrUnavailable() from exc
         except WorkerTimeout as exc:

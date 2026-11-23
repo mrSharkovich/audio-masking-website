@@ -25,14 +25,19 @@ class Settings:
     temp_directory: Path | None = None
     gigaam: ModelRuntime = field(default_factory=ModelRuntime)
     whisper: ModelRuntime = field(default_factory=ModelRuntime)
+    ffmpeg_path: Path | None = None
     worker_timeout_seconds: float = 120
     max_concurrent_asr: int = 1
     max_worker_output_bytes: int = 256 * 1024
     cpu_threads: int = 4
+    masking_stub: bool = False
+    masking_timeout_seconds: float = 30
 
     def __post_init__(self) -> None:
         if self.max_file_bytes <= 0 or self.max_duration_seconds <= 0:
             raise ValueError("Upload limits must be positive")
+        if not math.isfinite(self.masking_timeout_seconds) or self.masking_timeout_seconds <= 0:
+            raise ValueError("Masking timeout must be positive and finite")
         if (not math.isfinite(self.worker_timeout_seconds) or self.worker_timeout_seconds <= 0
                 or self.max_concurrent_asr <= 0 or self.max_worker_output_bytes <= 0 or self.cpu_threads <= 0):
             raise ValueError("Worker limits must be positive and finite")
@@ -40,14 +45,19 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         temp = os.environ.get("AUDIOMASK_TEMP_DIRECTORY")
+        ffmpeg = os.environ.get("AUDIOMASK_FFMPEG_PATH")
         return cls(
             max_file_bytes=int(os.environ.get("AUDIOMASK_MAX_FILE_BYTES", 25 * 1024 * 1024)),
             max_duration_seconds=int(os.environ.get("AUDIOMASK_MAX_DURATION_SECONDS", 300)),
             temp_directory=Path(temp) if temp else None,
             gigaam=runtime_from_env("GIGAAM"),
             whisper=runtime_from_env("WHISPER"),
+            ffmpeg_path=Path(ffmpeg) if ffmpeg else None,
             worker_timeout_seconds=float(os.environ.get("AUDIOMASK_WORKER_TIMEOUT_SECONDS", 120)),
             max_concurrent_asr=int(os.environ.get("AUDIOMASK_MAX_CONCURRENT_ASR", 1)),
             max_worker_output_bytes=int(os.environ.get("AUDIOMASK_MAX_WORKER_OUTPUT_BYTES", 256 * 1024)),
             cpu_threads=int(os.environ.get("AUDIOMASK_CPU_THREADS", 4)),
+            masking_stub=(os.environ.get("AUDIOMASK_ENV") == "development"
+                          and os.environ.get("AUDIOMASK_MASKING_STUB") == "1"),
+            masking_timeout_seconds=float(os.environ.get("AUDIOMASK_MASKING_TIMEOUT_SECONDS", 30)),
         )

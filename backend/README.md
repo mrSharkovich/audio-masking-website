@@ -3,8 +3,9 @@
 Python 3.11+, FastAPI. Frontend подключён к ASR API через локальный Vite proxy.
 Реализованы процессные адаптеры Whisper и GigaAM и отдельные worker-скрипты.
 Без настроенных окружений и локальных весов API возвращает HTTP 503.
-Разработка и локальные проверки выполняются на основном ПК без настоящих моделей;
-перенос на VM выполняется позднее, после завершения разработки.
+На основном Windows-ПК вручную подтверждено распознавание английской речи через
+Whisper small и русской речи через GigaAM-Multilingual CTC 220M через FastAPI и frontend.
+Обе модели работают в отдельных Python-окружениях вне репозитория.
 В проект не входят модели, веса, пользовательские записи и результаты экспериментов.
 
 ## Установка и запуск на Windows
@@ -70,6 +71,7 @@ npm.cmd run dev
 502 — сбой адаптера/некорректный ответ; 504 — тайм-аут worker;
 503 с кодом `asr_busy` — лимит параллельных запросов;
 503 с кодом `audio_preparation_unavailable` — нет библиотек преобразования;
+503 с кодом `ffmpeg_unavailable` — не задан/недоступен конкретный FFmpeg для GigaAM;
 500 — внутренняя ошибка запроса.
 Ответы не содержат исключений, имён загруженных файлов и серверных путей.
 
@@ -127,7 +129,7 @@ Torch, Transformers и faster-whisper. Команда формируется с�
 
 stdin — один JSON `{audio, weights, language}` с абсолютными локальными путями;
 stdout — UTF-8 JSON `{"text":"..."}`. Exit 0 — успех, 3 — отсутствуют ресурсы,
-2 — ошибка модели/протокола. stdout и stderr читаются ограниченно (по 256 КиБ
+4 — недоступен FFmpeg, 2 — ошибка модели/протокола. stdout и stderr читаются ограниченно (по 256 КиБ
 на поток); превышение завершает процесс. stderr не сохраняется и не попадает
 в API. Ожидание завершения дерева предшествует очистке WAV.
 
@@ -146,10 +148,11 @@ $env:AUDIOMASK_MAX_DURATION_SECONDS = "300"
 | `AUDIOMASK_MAX_FILE_BYTES` | Положительный лимит размера файла |
 | `AUDIOMASK_MAX_DURATION_SECONDS` | Положительный лимит длительности |
 | `AUDIOMASK_TEMP_DIRECTORY` | Необязательный существующий доступный для записи каталог; иначе системный temp |
-| `AUDIOMASK_GIGAAM_PYTHON` | Python окружения GigaAM на VM |
-| `AUDIOMASK_GIGAAM_WEIGHTS` | Локальные веса GigaAM на VM |
-| `AUDIOMASK_WHISPER_PYTHON` | Python окружения faster-whisper на VM |
-| `AUDIOMASK_WHISPER_WEIGHTS` | Локальные веса Whisper small multilingual на VM |
+| `AUDIOMASK_GIGAAM_PYTHON` | Python отдельного окружения GigaAM |
+| `AUDIOMASK_GIGAAM_WEIGHTS` | Локальные веса GigaAM |
+| `AUDIOMASK_WHISPER_PYTHON` | Python отдельного окружения faster-whisper |
+| `AUDIOMASK_WHISPER_WEIGHTS` | Локальные веса Whisper small multilingual |
+| `AUDIOMASK_FFMPEG_PATH` | Абсолютный путь к выбранному `ffmpeg.exe`, обязателен только для GigaAM |
 | `AUDIOMASK_WORKER_TIMEOUT_SECONDS` | Тайм-аут дочернего процесса, 120 по умолчанию |
 | `AUDIOMASK_MAX_CONCURRENT_ASR` | Общий лимит на процесс backend, 1 по умолчанию |
 | `AUDIOMASK_MAX_WORKER_OUTPUT_BYTES` | Лимит каждого потока worker, 262144 по умолчанию |
@@ -157,8 +160,55 @@ $env:AUDIOMASK_MAX_DURATION_SECONDS = "300"
 
 Пути к Python и весам должны быть абсолютными. Пустые/несуществующие пути означают
 недоступность ASR. Наличие пути не подтверждает готовность модели: это устанавливается
-при запуске worker. Не задавайте модельные окружения на основном ПК для локальных
-тестов: тесты явно внедряют свои адаптеры и подставной worker.
+при запуске worker. Автоматические тесты используют свои адаптеры и подставной worker.
+
+## Локальный тестовый режим маскирования
+
+Режим по умолчанию выключен. Для ручной проверки задайте обе переменные
+в PowerShell перед запуском backend и оставьте оба сервера на loopback.
+Используйте уже настроенное окружение API. Например, из корня репозитория:
+
+```powershell
+$env:AUDIOMASK_ENV = 'development'
+$env:AUDIOMASK_MASKING_STUB = '1'
+Set-Location .\backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 18080
+```
+
+Во втором PowerShell, из корня репозитория:
+
+```powershell
+$env:AUDIOMASK_BACKEND_URL = 'http://127.0.0.1:18080'
+Set-Location .\frontend
+npm.cmd run dev
+```
+
+Откройте `http://127.0.0.1:5173/process`, выберите WAV и запустите тестовую
+обработку. Для отключения задайте `$env:AUDIOMASK_MASKING_STUB = '0'` перед
+перезапуском backend и обновите страницу. Тестовый режим также недоступен
+без `AUDIOMASK_ENV=development` и для запросов с адресов вне loopback.
+
+- `GET /api/masking/status` возвращает `test_mode` и `notice` для интерфейса.
+- `POST /api/masking/process` принимает multipart с одним полем `file`.
+  Необязательные поля `mode` (`one-sided` или `two-sided`) и `matrix`
+  (4, 8, 16, 32, 64, 128, 256, 512) по умолчанию равны `two-sided` и `64`.
+  Применяются существующие ограничения размера, длительности и формата PCM WAV.
+- Успешный JSON содержит `test_mode: true`, `masking_performed: false`,
+  `notice`, `mode`, `selected_matrix`, `applied_matrix` и два объекта WAV
+  `masked` и `demasked`. В каждом есть `file_name`, `media_type: "audio/wav"`
+  и `base64`. Это независимые копии подготовленного WAV 16 кГц mono PCM16.
+  Уменьшение размера матрицы имитируется по числу отсчётов.
+- При ошибке API возвращает `error.code` и `error.message` без аудио.
+  Отключённый режим возвращает 503, истечение бюджета времени возвращает 504.
+  `AUDIOMASK_MASKING_TIMEOUT_SECONDS` по умолчанию равен 30 секундам.
+  Тайм-аут и отключение клиента проверяются между этапами. Текущая синхронная
+  операция заканчивается перед очисткой. Временные файлы удаляются в рамках
+  запроса. Браузер воспроизводит полученные копии из памяти.
+
+Будущий закрытый исполнитель реализует `MaskingExecutor`, получая путь к
+подготовленному WAV, параметры и пути двух выходов. Он возвращает применённый
+размер и завершает работу с файлами до возврата управления. Подключение
+процесса и маркировка реального результата потребуют согласованного контракта.
 
 ## Тестирование
 
@@ -174,47 +224,55 @@ cd backend # если вы ещё в корне проекта
 Тесты используют unittest, FastAPI TestClient/HTTPX внутри процесса, синтетический
 WAV и подставные subprocess-workers. Проверяются 48 кГц stereo → 16 кГц mono PCM16,
 сохранность оригинала/частоты тона, PCM-разрядности, маршрутизация, тайм-ауты,
-ограничение ru/en, ошибки/вывод workers, очистка и завершение дочернего процесса
-Windows Job Object. Вызовы библиотек моделей проверяются через подставные модули.
-Серверный порт, сеть, настоящие модели и датасет не нужны. Эти проверки не доказывают
-совместимость конкретных весов и установленного на VM ASR-окружения.
+ограничение ru/en, ошибки и вывод workers, изоляция PATH для FFmpeg, очистка и
+завершение дочерних процессов через Windows Job Object. Вызовы библиотек моделей
+проверяются через подставные модули. Серверный порт, сеть, модели и датасет не нужны.
 HTTPX 0.28.1 совместим с проверенной конфигурацией; Starlette 1.2.1 выводит
 предупреждение о будущей замене HTTPX на httpx2. Зависимости автоматически не меняются.
 
-## Окружения и проверка при окончательном переносе на VM
+## Окружения ASR на Windows
 
-1. После завершения локальной разработки указать пути к двум установленным
-   окружениям Python и полным локальным каталогам весов.
+1. Указать абсолютные пути к интерпретаторам двух отдельных Python-окружений
+   и полным локальным каталогам весов.
 2. Whisper worker ожидает **CTranslate2 small multilingual**, а не исходные PyTorch
-   веса. Нужны `model.bin`, `config.json`, `tokenizer.json`, `preprocessor_config.json`.
+   веса. Нужны `model.bin`, `config.json`, `tokenizer.json`, `vocabulary.txt`.
+   Для faster-whisper 1.2.1 `preprocessor_config.json` необязателен: без него
+   используются штатные настройки feature extractor. Создавать или отдельно
+   загружать такой файл для Systran small не требуется.
    Используется `faster_whisper.WhisperModel(local_path, device="cpu", compute_type="int8",
    local_files_only=True)`, язык фиксирован `en`, перевод и VAD выключены. Проверяется
    multilingual; соответствие каталога размеру small — ответственность конфигурации.
 3. GigaAM worker ожидает полный **Transformers snapshot GigaAM-Multilingual CTC 220M**
-   с config, весами, `modeling_gigaam.py` и локальными зависимостями custom code.
-   Проверяется вложенная конфигурация `multilingual_ctc`, encoder 16×768.
+   с `config.json`, `pytorch_model.bin`, `modeling_gigaam.py` и локальными зависимостями custom code.
+   В рабочем окружении проверены PyTorch `2.8.0+cpu`, TorchAudio `2.8.0+cpu`
+   и `pyannote.audio` `3.4.0`.
+   Проверяются вложенная конфигурация `multilingual_ctc`, encoder 16×768 и локальные
+   auto_map, без ссылок на другой Hub repository. Для этого CTC snapshot отдельный
+   tokenizer.model не нужен: словарь находится в config.
    Вызов: `AutoModel.from_pretrained(local_path, local_files_only=True,
-   trust_remote_code=True)`, CPU, eval, inference_mode, затем `model.transcribe(path)`.
+   trust_remote_code=True)`, явные CPU/torch.float32, eval, inference_mode, затем
+   `model.transcribe(path).text` с проверкой строкового типа.
+   Указать `AUDIOMASK_FFMPEG_PATH` до запроса: custom code вызывает FFmpeg даже для
+   нормализованного WAV. Backend добавляет каталог настроенного файла в начало
+   `PATH` только дочернего процесса GigaAM, чтобы вспомогательные вызовы находили
+   `ffmpeg.exe` по имени. Worker привязывает вызов через `run` в модуле модели к
+   полному настроенному пути с отключённым shell и протоколами file/pipe.
    `trust_remote_code` здесь разрешает только заранее размещённый доверенный локальный
-   код модели. Если VM использует отдельный пакет gigaam/иной формат checkpoint,
-   нужно адаптировать worker к этому формату до интеграционного теста.
+   код модели.
 4. Оба worker включают `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE`, отключают телеметрию
-   и Python socket connections. Имя Hugging Face-модели нигде не передаётся загрузчику.
+   и Python socket connections/DNS. Имя Hugging Face-модели нигде не передаётся загрузчику.
    При неполном локальном snapshot запрос завершается ошибкой, скачивания не должно
    быть. Python-ограничение сети не заменяет изоляцию ОС для произвольного native/custom
-   кода: при финальной проверке подтвердить отсутствие исходящего трафика.
-5. Проверить совместимость версий Torch/torchaudio/Transformers и faster-whisper/CT2,
-   фактические ru/en транскрипции, длинные записи, память и время старта на 4 vCPU,
-   10 ГБ RAM, отказоустойчивость и отсутствие сети при отключённом интернете.
-   Каждая модель загружается заново на запрос: постоянных resident workers пока нет.
-6. Проверить сквозной frontend-сценарий с настоящими моделями. HTTP-адаптер уже отправляет
-   один фактический файл и язык за запрос; model возвращается сервером и проверяется
-   клиентом. Для both выполняются последовательные запросы, чтобы не нарушать общий
-   лимит ASR. Маскированная запись станет доступна только после отдельного подключения
-   маскирования; отсутствие результата не подменяется исходником/демонстрацией.
+   кода.
+5. Каждая модель загружается заново на запрос. HTTP-адаптер отправляет один файл
+   и язык за запрос. Сервер возвращает поле `model`, которое проверяет клиент.
+   Для режима both запросы выполняются последовательно в рамках общего лимита ASR.
 
 Контракты загрузчиков сверены с первичными описаниями:
 [GigaAM-Multilingual](https://huggingface.co/ai-sage/GigaAM-Multilingual),
 [конфигурация CTC](https://huggingface.co/ai-sage/GigaAM-Multilingual/blob/main/config.json),
 [faster-whisper](https://pypi.org/project/faster-whisper/).
 Модельные зависимости не добавляются в окружение API и не устанавливались агентом.
+
+Предварительные команды и варианты зависимостей описаны в
+[плане локальной установки](docs/local-asr-install-plan.md).

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useWorkspace } from './useWorkspace';
-import type { AudioResult, DemoSettings, OperationValue } from '../types/audio';
+import type { AudioResult, DemoSettings, MaskingOptions, OperationValue } from '../types/audio';
 
 const settings: DemoSettings = { enabled: true, masking: 'success', quality: 'success', transcription: 'success' };
 const source = () => new File(['synthetic test input'], 'fixture.audio', { type: 'audio/test' });
@@ -37,6 +37,29 @@ describe('workspace transitions', () => {
     expect(result.current.busy).toBe(false); expect(result.current.result).toBe(previous);
     act(() => result.current.showResult()); expect(result.current.view).toBe('result');
     act(() => result.current.selectFiles([source()])); expect(result.current.result).toBeNull();
+  });
+  it('snapshots options and ignores a successful response from a cancelled request during a retry', async () => {
+    const completions: ((value: OperationValue<AudioResult>) => void)[] = [];
+    const adapter = { run: vi.fn((_file: File, _outcome: string, _options?: MaskingOptions, _signal?: AbortSignal) =>
+      new Promise<OperationValue<AudioResult>>((resolve) => { completions.push(resolve); })) };
+    const { result } = renderHook(() => useWorkspace(adapter));
+    const selected = source();
+    const options: MaskingOptions = { mode: 'one-sided', matrix: 128 };
+    act(() => result.current.selectFiles([selected]));
+    act(() => { void result.current.run(settings, options); });
+    options.matrix = 4;
+    expect(adapter.run).toHaveBeenNthCalledWith(1, selected, 'success', { mode: 'one-sided', matrix: 128 }, expect.any(AbortSignal));
+    act(() => result.current.cancel());
+    expect(adapter.run.mock.calls[0][3]?.aborted).toBe(true);
+    act(() => { void result.current.run(settings, options); });
+    const stale = demoResult();
+    await act(async () => { completions[0]({ status: 'success', value: stale }); });
+    expect(result.current.result).toBeNull();
+    expect(result.current.busy).toBe(true);
+    const current = demoResult();
+    await act(async () => { completions[1]({ status: 'success', value: current }); });
+    expect(result.current.result).toBe(current);
+    expect(result.current.busy).toBe(false);
   });
   it('rejects empty/multiple files and does not fake success outside demo', async () => {
     const adapter = { run: vi.fn() };

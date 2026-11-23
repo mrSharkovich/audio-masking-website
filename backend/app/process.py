@@ -22,6 +22,10 @@ class WorkerUnavailable(Exception):
     pass
 
 
+class WorkerFfmpegUnavailable(Exception):
+    pass
+
+
 class WindowsJob:
     """Kill-on-close Job Object, including descendants of an exited worker."""
     def __init__(self):
@@ -105,12 +109,18 @@ class WindowsJob:
 
 
 def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
-               output_limit: int, cpu_threads: int) -> dict:
+               output_limit: int, cpu_threads: int, ffmpeg: Path | None = None) -> dict:
     env = os.environ.copy()
     env.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", HF_DATASETS_OFFLINE="1",
                HF_HUB_DISABLE_TELEMETRY="1", DO_NOT_TRACK="1", CUDA_VISIBLE_DEVICES="",
                OMP_NUM_THREADS=str(cpu_threads), MKL_NUM_THREADS=str(cpu_threads),
-               AUDIOMASK_CPU_THREADS=str(cpu_threads))
+               AUDIOMASK_CPU_THREADS=str(cpu_threads), AUDIOMASK_FFMPEG_PATH=str(ffmpeg) if ffmpeg else "")
+    if ffmpeg is not None:
+        # GigaAM helpers outside the patched model module can launch "ffmpeg" by name.
+        inherited_path = env.get("PATH")
+        env["PATH"] = str(ffmpeg.parent)
+        if inherited_path:
+            env["PATH"] += os.pathsep + inherited_path
     proc = None
     job = None
     readers = []
@@ -203,6 +213,8 @@ def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
             for thread in readers:
                 thread.join()
     if overflow.is_set() or proc.returncode != 0:
+        if proc.returncode == 4 and not overflow.is_set():
+            raise WorkerFfmpegUnavailable()
         # Workers use exit 3 for unavailable dependencies/weights, without
         # forwarding tracebacks or model output to the HTTP response/logs.
         if proc.returncode == 3 and not overflow.is_set():

@@ -134,7 +134,7 @@ it('uses default HTTP adapter in App and never shows fake text after a server er
   vi.stubGlobal('fetch', fetcher);
   render(<App />);
   fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [syntheticWav()] } });
-  expect(fetcher).not.toHaveBeenCalled();
+  expect(fetcher).toHaveBeenCalledExactlyOnceWith('/api/masking/status', expect.objectContaining({ cache: 'no-store' }));
   fireEvent.click(screen.getByRole('button', { name: 'Запустить транскрибацию' }));
   expect(await screen.findByText('Локальная ASR-модель пока не подключена или недоступна.')).toBeInTheDocument();
   expect(screen.queryByText('FAKE TEXT')).not.toBeInTheDocument();

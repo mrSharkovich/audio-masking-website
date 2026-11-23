@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import type { RefObject } from 'react';
 import type { AudioAdapters, AudioLanguage, AudioResult, DemoSettings } from '../types/audio';
+import { maskingTestNotice } from '../types/audio';
+import { useObjectUrl } from '../hooks/useObjectUrl';
 import { AudioPlayer } from './AudioPlayer';
+import { audioDownloadName } from './audioDownloadName';
 import { QualityPanel } from './QualityPanel';
 import { TranscriptionPanel } from './TranscriptionPanel';
 
 interface Props {
   result: AudioResult;
   source: File;
-  sourceUrl?: string;
-  resultUrl?: string;
   adapters: AudioAdapters;
   settings: DemoSettings;
   audioLanguage: AudioLanguage;
@@ -19,30 +20,61 @@ interface Props {
   onNew: () => void;
 }
 
-export function ResultView(props: Props) {
-  const [downloadError, setDownloadError] = useState('');
-  const download = () => {
-    if (!props.resultUrl) { setDownloadError('Демонстрационный файл ещё не готов. Повторите попытку.'); return; }
-    try {
-      const link = document.createElement('a');
-      link.href = props.resultUrl; link.download = props.result.fileName;
-      document.body.appendChild(link); link.click(); link.remove();
-      setDownloadError('');
-    } catch { setDownloadError('Не удалось начать скачивание демонстрационного файла. Проверьте разрешения браузера.'); }
+const recordings = ['original', 'masked', 'demasked'] as const;
+type Recording = typeof recordings[number];
+
+function pauseOnDetach(audio: HTMLAudioElement | null) {
+  if (audio) return () => audio.pause();
+}
+
+function ResultAudio({ source, result }: Pick<Props, 'source' | 'result'>) {
+  const [selection, setSelection] = useState<Recording>('original');
+  const test = result.testMasking;
+  const details = test ?? result.masking;
+  const demo = result.demonstration && !test;
+  const tracks = {
+    original: { title: 'Оригинал', file: source, note: undefined },
+    masked: { title: demo ? 'Демонстрационный пример' : 'Маскированное аудио', file: result.audio,
+      note: test ? 'Тестовая маскированная копия' : undefined },
+    demasked: { title: 'Демаскированное аудио', file: details?.demasked,
+      note: test ? 'Тестовая демаскированная копия' : undefined },
   };
+  const track = tracks[selection];
+  const available = Boolean(track.file?.size);
+  const url = useObjectUrl(available ? track.file ?? null : null);
+  const name = audioDownloadName(source.name, selection);
+  return (
+    <div className="audio-channel">
+      <label className="recording-selector">Аудиозапись
+        <select value={selection} onChange={(event) => setSelection(event.currentTarget.value as Recording)}>
+          {recordings.map((recording) => <option key={recording} value={recording}>{tracks[recording].title}</option>)}
+        </select>
+      </label>
+      {available && track.note ? <span className="channel-badge">{track.note}</span> : null}
+      {url ? <AudioPlayer key={selection} label={track.title} url={url} mediaRef={pauseOnDetach}
+        titleAction={<a className="button primary audio-download" href={url} download={name}
+          title="Скачать аудио" aria-label="Скачать аудио">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+            <path d="M12 3v12m-5-5 5 5 5-5M4 16v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+          </svg>
+        </a>} /> : null}
+      {available ? <p className="file-caption">{name}</p> : <p className="file-caption" role="status">Выбранная запись недоступна.</p>}
+    </div>
+  );
+}
+
+export function ResultView(props: Props) {
+  const test = props.result.testMasking;
+  const details = test ?? props.result.masking;
   return <div className="result-view">
-    <div className="section-heading"><div><span className="section-index" aria-hidden="true">02</span><h2 ref={props.headingRef} tabIndex={-1}>Результат демонстрации</h2></div><span className="status-chip ready">Сценарий завершён</span></div>
-    <p className="result-notice">Демонстрация — реальные операции не выполняются. Вместо обработанного файла представлен отдельный синтетический тон. Он не получен из вашей записи.</p>
-    <div className="player-comparison">
-      <div className="audio-channel"><span className="channel-badge">Вход</span><AudioPlayer label="Оригинал" url={props.sourceUrl} /><p className="file-caption">{props.source.name}</p></div>
-      <div className="audio-channel demo-channel"><span className="channel-badge">Тестовый пример</span><AudioPlayer label="После маскирования" url={props.resultUrl} /><p className="file-caption">Демонстрационный синтетический тон, не результат маскирования</p></div>
-    </div>
-    <div className="result-actions">
-      <button className="button primary" type="button" disabled={!props.resultUrl} onClick={download}>Скачать демонстрационный файл<span aria-hidden="true">↓</span></button>
-      <button className="button secondary" type="button" disabled title="Настоящий обработанный файл отсутствует">Скачать обработанное аудио</button>
-    </div>
-    <p className="small-note">Настоящее скачивание результата станет доступно после подключения обработки. Исходная запись не подменяет обработанный файл.</p>
-    {downloadError ? <p className="message error" role="alert">{downloadError}</p> : null}
+    <div className="section-heading"><div><span className="section-index" aria-hidden="true">02</span><h2 ref={props.headingRef} tabIndex={-1}>{test ? 'Результат тестовой обработки' : props.result.demonstration ? 'Результат демонстрации' : 'Результат обработки'}</h2></div><span className="status-chip ready">Сценарий завершён</span></div>
+    {test || props.result.demonstration ? <p className="result-notice">{test ? maskingTestNotice : 'Демонстрация — реальные операции не выполняются. Вместо обработанного файла представлен отдельный синтетический тон. Он не получен из вашей записи.'}</p> : null}
+    {details ? <div className="small-note">
+      <p>Режим: {details.options.mode === 'one-sided' ? 'Односторонний' : 'Двухсторонний'}. Выбранный размер матрицы: {details.options.matrix}. Применённый размер{test ? ' в тестовом режиме' : ''}: {details.appliedMatrix}.</p>
+      {details.appliedMatrix < details.options.matrix ? <p role="status">Размер матрицы автоматически уменьшен с {details.options.matrix} до {details.appliedMatrix}{test ? ' по длине подготовленной записи' : ''}.</p> : null}
+    </div> : null}
+    <ResultAudio key={`audio-${props.result.id}`} source={props.source} result={props.result} />
     <div className="result-navigation">
       <button className="text-button" type="button" onClick={props.onForm}>Вернуться к форме</button>
       <button className="button secondary" type="button" onClick={props.onForm}>Обработать ещё раз</button>

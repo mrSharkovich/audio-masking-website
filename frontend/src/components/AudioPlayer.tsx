@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode, Ref } from 'react';
 
 interface Props {
   label: string;
   url?: string;
   onDuration?: (duration: number | null) => void;
+  mediaRef?: Ref<HTMLAudioElement>;
+  titleAction?: ReactNode;
 }
 
-export function AudioPlayer({ label, url, onDuration }: Props) {
+export function AudioPlayer({ label, url, onDuration, mediaRef, titleAction }: Props) {
   const [failedUrl, setFailedUrl] = useState<string | undefined>();
   useEffect(() => { onDuration?.(null); }, [url, onDuration]);
   return <div className="player-block">
-    <span className="player-label">{label}</span>
+    {titleAction ? <div className="player-title-row"><span className="player-label">{label}</span>{titleAction}</div>
+      : <span className="player-label">{label}</span>}
     <audio
       key={url}
+      ref={mediaRef}
       aria-label={label}
       controls
       preload="metadata"

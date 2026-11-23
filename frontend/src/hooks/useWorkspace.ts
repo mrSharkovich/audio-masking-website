@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AudioResult, DemoSettings, MaskingAdapter } from '../types/audio';
+import type { AudioResult, DemoSettings, MaskingAdapter, MaskingOptions } from '../types/audio';
 
 export function useWorkspace(adapter: MaskingAdapter) {
   const [source, setSource] = useState<File | null>(null);
@@ -9,7 +9,8 @@ export function useWorkspace(adapter: MaskingAdapter) {
   const [error, setError] = useState('');
   const lock = useRef(false);
   const revision = useRef(0);
-  useEffect(() => () => { revision.current++; }, []);
+  const controller = useRef<AbortController | null>(null);
+  useEffect(() => () => { revision.current++; controller.current?.abort(); }, []);
 
   const selectFiles = (files: FileList | readonly File[]) => {
     if (lock.current) return;
@@ -27,26 +28,35 @@ export function useWorkspace(adapter: MaskingAdapter) {
     revision.current++;
     setSource(null); setResult(null); setView('form'); setError('');
   };
-  const run = async (settings: DemoSettings) => {
+  const run = async (settings: DemoSettings, options?: MaskingOptions) => {
     if (lock.current || !source) return;
     if (!settings.enabled) {
       setError('Реальная обработка недоступна: сервис пока не подключён.');
       return;
     }
     lock.current = true; setBusy(true); setError('');
+    const abort = new AbortController();
+    controller.current = abort;
     const request = ++revision.current;
+    const submittedOptions = options && { ...options };
     try {
-      const response = await adapter.run(source, settings.masking);
+      const response = await adapter.run(source, settings.masking, submittedOptions, abort.signal);
       if (request !== revision.current) return;
       if (response.status === 'success') { setResult(response.value); setView('result'); }
       else setError(response.message);
     } catch {
-      if (request === revision.current) setError('Не удалось показать демонстрационный результат. Повторите попытку.');
+      if (request === revision.current) setError('Не удалось получить тестовый результат. Повторите попытку.');
     } finally {
-      if (request === revision.current) { lock.current = false; setBusy(false); }
+      if (request === revision.current) { controller.current = null; lock.current = false; setBusy(false); }
     }
+  };
+  const cancel = () => {
+    if (!controller.current) return;
+    revision.current++;
+    controller.current.abort(); controller.current = null;
+    lock.current = false; setBusy(false); setError('Запрос тестовой обработки отменён.');
   };
   const showForm = () => { if (!lock.current) { setView('form'); setError(''); } };
   const showResult = () => { if (!lock.current && result) { setView('result'); setError(''); } };
-  return { source, result, view, busy, error, selectFiles, clear, run, showForm, showResult };
+  return { source, result, view, busy, error, selectFiles, clear, run, cancel, showForm, showResult };
 }

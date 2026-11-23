@@ -8,6 +8,7 @@ import sys
 from tempfile import TemporaryDirectory
 import time
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -28,7 +29,9 @@ class ProcessTests(unittest.TestCase):
         self.weights.mkdir()
         self.mode = self.weights / "mode"
         self.mode.write_text("success")
-        self.settings = Settings(temp_directory=self.uploads, worker_timeout_seconds=2)
+        self.ffmpeg = self.root / "selected ffmpeg stub.exe"
+        self.ffmpeg.write_bytes(b"test-only stub, not executed")
+        self.settings = Settings(temp_directory=self.uploads, worker_timeout_seconds=2, ffmpeg_path=self.ffmpeg)
         runtime = ModelRuntime(Path(sys.executable), self.weights)
         script = Path(__file__).parent.resolve() / "fake_worker.py"
         self.adapters = {"gigaam-multi": GigaAMAdapter(runtime, self.settings, worker=script),
@@ -50,8 +53,27 @@ class ProcessTests(unittest.TestCase):
             self.assertEqual(response.json(), {"language": language, "model": model, "text": "test-only:" + language})
             self.assertClean()
 
+    def test_only_gigaam_worker_finds_configured_ffmpeg_first(self):
+        executable = "ffmpeg.exe" if os.name == "nt" else "ffmpeg"
+        configured = self.root / "configured ffmpeg" / executable
+        fallback = self.root / "inherited path" / executable
+        for path in (configured, fallback):
+            path.parent.mkdir()
+            path.write_bytes(b"lookup-only stub")
+            path.chmod(0o700)
+        self.adapters["gigaam-multi"].settings = replace(self.settings, ffmpeg_path=configured)
+        self.mode.write_text("ffmpeg_lookup")
+        inherited_path = str(fallback.parent)
+        with patch.dict(os.environ, {"PATH": inherited_path}):
+            for language in ("ru", "en"):
+                with self.subTest(language=language):
+                    response = self.post(language)
+                    self.assertEqual(response.status_code, 200, response.text)
+                    self.assertEqual(os.environ["PATH"], inherited_path)
+        self.assertClean()
+
     def test_worker_failure_protocol_and_output_limits(self):
-        for mode, status in [("unavailable", 503), ("failure", 502), ("invalid", 502),
+        for mode, status in [("unavailable", 503), ("ffmpeg_unavailable", 503), ("failure", 502), ("invalid", 502),
                              ("schema", 502), ("flood", 502), ("stderr_flood", 502)]:
             with self.subTest(mode=mode):
                 self.mode.write_text(mode)
@@ -59,6 +81,9 @@ class ProcessTests(unittest.TestCase):
                 self.assertEqual(response.status_code, status, response.text)
                 self.assertNotIn("private", response.text)
                 self.assertNotIn(str(self.root), response.text)
+                if mode == "ffmpeg_unavailable":
+                    self.assertEqual(response.json()["error"]["code"], "ffmpeg_unavailable")
+                    self.assertIn("FFmpeg", response.json()["error"]["message"])
                 self.assertClean()
         self.mode.write_text("success")
         self.assertEqual(self.post().status_code, 200)  # Slot released on errors.
@@ -96,6 +121,25 @@ class ProcessTests(unittest.TestCase):
                 self.assertEqual(self.post(client=client).status_code, 503)
         with self.assertRaises(AsrUnavailable):
             self.adapters["whisper"].transcribe(self.root / "a.wav", "ru")
+        self.assertClean()
+
+    def test_missing_ffmpeg_returns_specific_error_without_starting_worker(self):
+        for path in [None, Path("relative.exe"), self.root / "missing.exe"]:
+            with TestClient(create_app(replace(self.settings, ffmpeg_path=path),
+                                      {"gigaam-multi": GigaAMAdapter(self.adapters["gigaam-multi"].runtime,
+                                        replace(self.settings, ffmpeg_path=path), worker=self.adapters["gigaam-multi"].worker)})) as client:
+                response = self.post(client=client)
+                self.assertEqual(response.status_code, 503)
+                self.assertEqual(response.json()["error"]["code"], "ffmpeg_unavailable")
+                self.assertNotIn(str(self.root), response.text)
+                self.assertFalse((self.weights / "ready").exists())
+                self.assertClean()
+
+    def test_whisper_does_not_require_ffmpeg(self):
+        settings = replace(self.settings, ffmpeg_path=None)
+        adapter = WhisperAdapter(self.adapters["whisper"].runtime, settings, worker=self.adapters["whisper"].worker)
+        with TestClient(create_app(settings, {"whisper": adapter})) as client:
+            self.assertEqual(self.post("en", client=client).status_code, 200)
         self.assertClean()
 
     @unittest.skipUnless(os.name == "nt", "Windows Job Object integration")

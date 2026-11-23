@@ -127,7 +127,9 @@
   summary { cursor: pointer; font-size: 14px; font-weight: 600; }
   .parameters summary { display: flex; justify-content: space-between; }
   .parameters p { margin-top: 12px; color: var(--muted); font-size: 14px; max-width: 70ch; }
-  .form-actions, .result-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+  .masking-fields { display: grid; gap: 12px; margin-top: 12px; }
+  .masking-fields label { font-size: 14px; }
+  .form-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
   .message { padding: 14px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; }
   .message.error { color: var(--danger); background: var(--danger-soft); border: 1px solid var(--danger); }
   .operation-status { min-height: 20px; }
@@ -140,9 +142,13 @@
   .demo-fields label { font-size: 12px; font-weight: 600; }
   select { width: 100%; min-height: 44px; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px; margin-top: 6px; }
   .result-notice { color: var(--muted); max-width: 80ch; font-size: 14px; margin-bottom: 22px; }
-  .player-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .audio-channel { border: 1px solid var(--border); border-radius: 10px; padding: 20px; min-width: 0; }
-  .demo-channel { background: var(--surface-raised); }
+  .recording-selector { display: block; margin-bottom: 16px; font-size: 14px; font-weight: 600; }
+  .player-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .player-title-row .player-label { margin-bottom: 0; }
+  .button.audio-download { flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; padding: 0; }
+  .audio-download:focus-visible { outline: 3px solid var(--focus); }
+  .audio-download:active { transform: translateY(1px); }
   .channel-badge { color: var(--accent); font-size: 12px; display: block; margin-bottom: 12px; font-weight: 600; }
   .file-caption { font-size: 12px; color: var(--muted); margin-top: 12px; overflow-wrap: anywhere; }
   .result-navigation { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--border); padding-top: 24px; margin-top: 24px; }
@@ -204,12 +210,12 @@
     .drop-title { font-size: 16px; }
     .drop-caption { font-size: 12px; }
     .button { padding-inline: 14px; }
-    .form-actions, .result-actions, .result-navigation { flex-direction: column; align-items: stretch; }
-    .form-actions .button, .result-actions .button { width: 100%; }
+    .form-actions, .result-navigation { flex-direction: column; align-items: stretch; }
+    .form-actions .button { width: 100%; }
     .file-summary { padding: 14px; }
     .file-line { flex-direction: column; gap: 6px; }
     .file-line .text-button { padding-top: 4px; }
-    .player-comparison, .metrics, .demo-fields { grid-template-columns: 1fr; }
+    .metrics, .demo-fields { grid-template-columns: 1fr; }
     .audio-channel { padding: 16px; }
     .demo-controls { padding: 14px 18px; }
     .result-navigation > .text-button { margin-right: 0; }

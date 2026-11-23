@@ -14,12 +14,29 @@ export interface AudioResult {
   id: string;
   audio: Blob;
   fileName: string;
-  demonstration: true;
+  demonstration: boolean;
+  testMasking?: MaskingDetails;
+  masking?: MaskingDetails;
 }
+
+interface MaskingDetails {
+  options: MaskingOptions;
+  appliedMatrix: MatrixSize;
+  demasked: Blob;
+  demaskedFileName: string;
+}
+
+export const matrixSizes = [4, 8, 16, 32, 64, 128, 256, 512] as const;
+export type MatrixSize = typeof matrixSizes[number];
+export interface MaskingOptions {
+  mode: 'one-sided' | 'two-sided';
+  matrix: MatrixSize;
+}
+export const maskingTestNotice = 'Тестовый режим. Маскирование не выполняется. Аудиофайлы возвращаются без изменения звучания';
 
 export type MetricName = 'PESQ' | 'ViSQOL';
 export type QualityResult = Record<MetricName, OperationValue<number>>;
-export type TranscriptSource = 'original' | 'masked';
+export type TranscriptSource = 'original' | 'masked' | 'demasked';
 export type TranscriptSelection = TranscriptSource | 'both';
 export type AudioLanguage = 'ru' | 'en';
 export type AsrConfiguration =
@@ -32,7 +49,8 @@ export const asrConfigurations = {
 export type TranscriptionResult = Partial<Record<TranscriptSource, OperationValue<string>>>;
 
 export interface MaskingAdapter {
-  run(source: File, outcome: DemoOutcome): Promise<OperationValue<AudioResult>>;
+  available?(signal: AbortSignal): Promise<boolean>;
+  run(source: File, outcome: DemoOutcome, options?: MaskingOptions, signal?: AbortSignal): Promise<OperationValue<AudioResult>>;
 }
 export interface QualityAdapter {
   evaluate(resultId: string, outcome: DemoOutcome): Promise<QualityResult>;
@@ -44,6 +62,7 @@ export interface AsrMaskedAudio {
   audio: Blob;
   fileName: string;
   demonstration: boolean;
+  testMasking?: AudioResult['testMasking'];
 }
 export interface DemoTranscriptionAdapter {
   transcribe(resultId: string, selection: TranscriptSelection, outcome: DemoOutcome, configuration: AsrConfiguration): Promise<TranscriptionResult>;

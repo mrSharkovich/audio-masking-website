@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections.abc import Callable
 from dataclasses import dataclass
 from math import gcd
 import struct
@@ -23,7 +24,8 @@ class WaveInfo:
     frames: int
 
 
-def validate_wav(path: Path, settings: Settings, *, normalized: bool = True) -> WaveInfo:
+def validate_wav(path: Path, settings: Settings, *, normalized: bool = True,
+                 checkpoint: Callable[[], None] | None = None) -> WaveInfo:
     """Validate actual PCM samples, not MIME or a client-supplied name."""
     try:
         with path.open("rb") as raw:
@@ -38,6 +40,8 @@ def validate_wav(path: Path, settings: Settings, *, normalized: bool = True) -> 
             end = path.stat().st_size
             data_chunks = 0
             while raw.tell() < end:
+                if checkpoint is not None:
+                    checkpoint()
                 chunk = raw.read(8)
                 if len(chunk) != 8:
                     raise InvalidAudio()
@@ -63,6 +67,8 @@ def validate_wav(path: Path, settings: Settings, *, normalized: bool = True) -> 
                 raise InvalidAudio()
             remaining = info.frames
             while remaining:
+                if checkpoint is not None:
+                    checkpoint()
                 count = min(remaining, 16000)
                 if len(audio.readframes(count)) != count * info.channels * info.width:
                     raise InvalidAudio()
@@ -72,9 +78,10 @@ def validate_wav(path: Path, settings: Settings, *, normalized: bool = True) -> 
         raise InvalidAudio() from exc
 
 
-def prepare_wav(source: Path, target: Path, settings: Settings) -> Path:
+def prepare_wav(source: Path, target: Path, settings: Settings, *,
+                checkpoint: Callable[[], None] | None = None) -> Path:
     """Return validated input or a separate normalized WAV; never rewrite source."""
-    info = validate_wav(source, settings, normalized=False)
+    info = validate_wav(source, settings, normalized=False, checkpoint=checkpoint)
     if (info.rate, info.channels, info.width) == (16000, 1, 2):
         return source
     if source.resolve() == target.resolve():
@@ -107,5 +114,5 @@ def prepare_wav(source: Path, target: Path, settings: Settings) -> Path:
         audio.setsampwidth(2)
         audio.setframerate(16000)
         audio.writeframes(pcm.tobytes())
-    validate_wav(target, settings)
+    validate_wav(target, settings, checkpoint=checkpoint)
     return target

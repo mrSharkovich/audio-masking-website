@@ -7,6 +7,10 @@ import socket
 import sys
 
 
+class FfmpegUnavailable(Exception):
+    pass
+
+
 def execute(transcribe, language: str):
     # Parent assigns process containment before writing this startup gate.
     request = json.loads(sys.stdin.buffer.readline(65536))
@@ -24,6 +28,9 @@ def execute(transcribe, language: str):
     socket.socket.connect = deny_network
     socket.socket.connect_ex = deny_network
     socket.create_connection = deny_network
+    socket.getaddrinfo = deny_network
+    socket.gethostbyname = deny_network
+    socket.gethostbyname_ex = deny_network
     try:
         # Library diagnostics may contain paths/text. Discard rather than persist
         # or forward them; stdout contains only our bounded UTF-8 JSON protocol.
@@ -34,6 +41,8 @@ def execute(transcribe, language: str):
         sys.stdout.buffer.write(json.dumps({"text": text}, ensure_ascii=False).encode("utf-8"))
         sys.stdout.buffer.flush()
         return 0
+    except FfmpegUnavailable:
+        return 4
     except (ImportError, FileNotFoundError, OSError):
         return 3
     except Exception:

@@ -122,7 +122,7 @@ class MaskingTests(unittest.TestCase):
 
     def test_invalid_files_fields_and_limits(self):
         for payload, params, status in [
-            (b"", None, 422), (wav(frames=0), None, 415), (b"not wav", None, 415),
+            (b"", None, 422), (wav(frames=0), None, 415), (b"not wav", None, 503),
             (wav(), {"mode": "invalid"}, 422), (wav(), {"matrix": "5"}, 422),
             (wav(), {"matrix": ["4", "8"]}, 422), (wav(), {"other": "value"}, 422),
         ]:

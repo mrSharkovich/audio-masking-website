@@ -41,7 +41,7 @@ export function createDemoAdapters(delay = 700): DemoAudioAdapters {
       },
     },
     quality: {
-      async evaluate(_resultId: string, outcome: DemoOutcome): Promise<QualityResult> {
+      async evaluate(_resultId: string, outcome: DemoOutcome): Promise<Pick<QualityResult, 'PESQ' | 'ViSQOL'>> {
         await wait(delay);
         if (outcome === 'error') return {
           PESQ: { status: 'error', message: 'Демонстрационная ошибка оценки.' },

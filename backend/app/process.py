@@ -1,6 +1,7 @@
 """Bounded local worker execution. No shell, model imports, or network calls."""
 import ctypes
 from ctypes import wintypes
+from collections.abc import Callable
 import json
 import os
 from pathlib import Path
@@ -121,6 +122,26 @@ def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
         env["PATH"] = str(ffmpeg.parent)
         if inherited_path:
             env["PATH"] += os.pathsep + inherited_path
+    returncode, output = run_worker_process(
+        [str(python), "-I", "-u", str(script)], script.parent, request,
+        timeout=timeout, output_limit=output_limit, env=env,
+    )
+    if returncode == 4:
+        raise WorkerFfmpegUnavailable()
+    if returncode == 3:
+        raise WorkerUnavailable()
+    if returncode != 0:
+        raise WorkerFailed()
+    result = decode_worker_json(output)
+    if set(result) != {"text"} or not isinstance(result["text"], str):
+        raise WorkerFailed()
+    return result
+
+
+def run_worker_process(command: list[str], cwd: Path, request: dict | None, *, timeout: float,
+                       output_limit: int, env: dict | None = None,
+                       checkpoint: Callable[[], None] | None = None,
+                       startup_gate: bool = False) -> tuple[int, bytearray]:
     proc = None
     job = None
     readers = []
@@ -155,12 +176,15 @@ def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
                 pass
 
     try:
+        if checkpoint is not None:
+            checkpoint()
         if os.name == "nt":
             job = WindowsJob()
         proc = subprocess.Popen(
-            [str(python), "-I", "-u", str(script)], shell=False,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            env=env, cwd=str(script.parent),
+            command, shell=False,
+            stdin=subprocess.PIPE if request is not None else subprocess.DEVNULL,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            env=env, cwd=str(cwd),
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
             start_new_session=os.name != "nt",
         )
@@ -172,14 +196,18 @@ def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
             thread = threading.Thread(target=read_pipe, args=(pipe, keep), daemon=True)
             readers.append(thread)
             thread.start()
-        data = json.dumps(request, ensure_ascii=True).encode("ascii") + b"\n"
-        if len(data) >= 65536:
-            raise WorkerFailed()
-        # Even a misconfigured interpreter that never reads stdin cannot block
-        # the supervisor's deadline on a full Windows pipe.
-        writer = threading.Thread(target=write_request, args=(proc.stdin, data), daemon=True)
-        writer.start()
+        if request is not None:
+            data = json.dumps(request, ensure_ascii=True).encode("ascii") + b"\n"
+            if startup_gate:
+                data = b"\n" + data
+            if len(data) >= 65536:
+                raise WorkerFailed()
+            # Keep a worker that never reads stdin from blocking the deadline.
+            writer = threading.Thread(target=write_request, args=(proc.stdin, data), daemon=True)
+            writer.start()
         while proc.poll() is None:
+            if checkpoint is not None:
+                checkpoint()
             if overflow.is_set():
                 raise WorkerFailed()
             if time.monotonic() >= deadline:
@@ -188,6 +216,8 @@ def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
         # Cleanup below kills descendants before joining readers: a child may
         # still hold the output handles even after its parent exits.
     except (OSError, ValueError) as exc:
+        if isinstance(exc, TimeoutError) and checkpoint is not None:
+            checkpoint()
         raise WorkerUnavailable() from exc
     finally:
         try:
@@ -212,17 +242,15 @@ def run_worker(python: Path, script: Path, request: dict, *, timeout: float,
                     proc.stdin.close()
             for thread in readers:
                 thread.join()
-    if overflow.is_set() or proc.returncode != 0:
-        if proc.returncode == 4 and not overflow.is_set():
-            raise WorkerFfmpegUnavailable()
-        # Workers use exit 3 for unavailable dependencies/weights, without
-        # forwarding tracebacks or model output to the HTTP response/logs.
-        if proc.returncode == 3 and not overflow.is_set():
-            raise WorkerUnavailable()
+    if overflow.is_set():
         raise WorkerFailed()
+    return proc.returncode, output
+
+
+def decode_worker_json(output: bytearray) -> dict:
     try:
         result = json.loads(output.decode("utf-8"))
-        if not isinstance(result, dict) or set(result) != {"text"} or not isinstance(result["text"], str):
+        if not isinstance(result, dict):
             raise ValueError()
         return result
     except (UnicodeError, ValueError) as exc:

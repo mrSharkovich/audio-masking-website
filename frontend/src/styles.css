@@ -160,6 +160,15 @@
   .quiet-tag { margin-left: auto; }
   .auxiliary-panel > p { font-size: 14px; color: var(--muted); margin: 12px 0 18px; max-width: 80ch; }
   .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  .quality-pairs { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-block: 12px; }
+  .quality-pairs label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+  .quality-comparison { margin-top: 16px; }
+  .quality-comparison h4 { margin: 0 0 8px; font-size: 14px; }
+  .quality-comparison .metrics { margin-top: 0; }
+  .quality-comparison .metric { padding: 12px; }
+  @media (min-width: 801px) {
+    .quality-comparison .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
   .metric { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; }
   .metric strong { font-size: 14px; }
   .metric-value { font-size: 30px; letter-spacing: -1px; margin: 4px 0; color: var(--accent); }

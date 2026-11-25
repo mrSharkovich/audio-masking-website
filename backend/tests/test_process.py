@@ -22,7 +22,8 @@ class ProcessTests(unittest.TestCase):
     def setUp(self):
         self.temp = TemporaryDirectory(prefix="asr test ")
         self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name)
+        # The TEMP path can use a Windows 8.3 alias. The worker gets resolved weights.
+        self.root = Path(self.temp.name).resolve()
         self.uploads = self.root / "uploads"
         self.uploads.mkdir()
         self.weights = self.root / "local weights"

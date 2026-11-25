@@ -18,8 +18,10 @@ from starlette.exceptions import HTTPException
 from .asr import AsrAdapter, AsrUnavailable, AsrFfmpegUnavailable, AsrTimeout, Language, MODELS, WhisperAdapter, GigaAMAdapter
 from .audio import InvalidAudio, prepare_wav, AudioPreparationUnavailable
 from .config import Settings
-from .masking import (CopyMaskingStub, EmptyUpload, MaskingCancelled, MATRICES, MODES,
-                      NOTICE, UploadTooLarge, process_upload)
+from .masking import (EmptyUpload, MaskingCancelled, MATRICES, MODES, NOTICE,
+                      UploadTooLarge, configured_masking_executor, process_upload)
+from .process import WorkerFailed, WorkerUnavailable
+from .quality import quality_router
 
 
 def error(status: int, code: str, message: str) -> JSONResponse:
@@ -28,32 +30,40 @@ def error(status: int, code: str, message: str) -> JSONResponse:
 
 class BodyLimit:
     """Bound multipart data before parsing/spooling, even without Content-Length."""
-    def __init__(self, app, limit: int, masking_timeout: float):
+    def __init__(self, app, limit: int, masking_timeout: float, quality_limit: int, quality_timeout: float):
         self.app, self.limit = app, limit
         self.masking_timeout = masking_timeout
+        self.quality_limit, self.quality_timeout = quality_limit, quality_timeout
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or scope["path"] not in {"/api/asr/transcribe", "/api/masking/process"}:
+        if scope["type"] != "http" or scope["path"] not in {"/api/asr/transcribe", "/api/masking/process", "/api/quality/evaluate"}:
             return await self.app(scope, receive, send)
         masking = scope["path"] == "/api/masking/process"
+        quality = scope["path"] == "/api/quality/evaluate"
+        timeout = self.quality_timeout if quality else self.masking_timeout
+        limit = self.quality_limit if quality else self.limit
         if masking:
             scope["audiomask.masking_deadline"] = monotonic() + self.masking_timeout
+        if quality:
+            scope["audiomask.quality_deadline"] = monotonic() + timeout
         body = bytearray()
         limit_response = None
         try:
-            with fail_after(self.masking_timeout) if masking else nullcontext():
+            with fail_after(timeout) if masking or quality else nullcontext():
                 while True:
                     message = await receive()
                     if message["type"] == "http.disconnect":
                         return
                     chunk = message.get("body", b"")
-                    if len(body) + len(chunk) > self.limit:
+                    if len(body) + len(chunk) > limit:
                         limit_response = error(413, "upload_too_large", "Превышен допустимый размер запроса.")
                         break
                     body.extend(chunk)
                     if not message.get("more_body", False):
                         break
         except TimeoutError:
+            if quality:
+                return await error(504, "quality_timeout", "Истекло время загрузки аудио.")(scope, receive, send)
             if not masking:
                 raise
             limit_response = error(504, "masking_timeout", "Истекло время загрузки аудиофайла.")
@@ -128,13 +138,21 @@ def create_app(settings: Settings | None = None, adapters: Mapping[str, AsrAdapt
     if adapters is not None:
         registry.update(adapters)
     app = FastAPI(title="AudioMask local ASR", debug=False)
+    quality_file_limit = max(settings.max_file_bytes, 44 + 32000 * settings.max_duration_seconds)
     app.add_middleware(BodyLimit, limit=settings.max_file_bytes + 64 * 1024,
-                       masking_timeout=settings.masking_timeout_seconds)
-    masking_executor = CopyMaskingStub(settings) if settings.masking_stub else None
+                       masking_timeout=settings.masking_timeout_seconds,
+                       quality_limit=settings.max_file_bytes + 2 * quality_file_limit + 64 * 1024,
+                       quality_timeout=settings.quality_timeout_seconds)
+    app.include_router(quality_router(settings, quality_file_limit))
+    masking_executor = configured_masking_executor(settings)
     masking_slot = BoundedSemaphore(1)
 
-    def local_masking(request: Request) -> bool:
-        if masking_executor is None or request.client is None:
+    def masking_available(request: Request) -> bool:
+        if masking_executor is None:
+            return False
+        if not masking_executor.test_mode:
+            return True
+        if request.client is None:
             return False
         try:
             return ip_address(request.client.host).is_loopback
@@ -143,16 +161,17 @@ def create_app(settings: Settings | None = None, adapters: Mapping[str, AsrAdapt
 
     @app.get("/api/masking/status")
     def masking_status(request: Request):
-        available = local_masking(request)
-        return JSONResponse({"test_mode": available, "notice": NOTICE if available else None},
+        available = masking_available(request)
+        test_mode = available and masking_executor is not None and masking_executor.test_mode
+        return JSONResponse({"available": available, "test_mode": test_mode, "notice": NOTICE if test_mode else None},
                             headers={"Cache-Control": "no-store"})
 
     @app.post("/api/masking/process")
     async def masking_process(request: Request):
-        if masking_executor is None or not local_masking(request):
-            return error(503, "masking_unavailable", "Тестовая обработка недоступна.")
+        if masking_executor is None or not masking_available(request):
+            return error(503, "masking_unavailable", "Маскирование недоступно.")
         if not masking_slot.acquire(blocking=False):
-            return error(503, "masking_busy", "Тестовая обработка занята. Повторите запрос позже.")
+            return error(503, "masking_busy", "Обработка занята. Повторите запрос позже.")
         cancelled = Event()
         deadline = request.scope["audiomask.masking_deadline"]
 
@@ -174,7 +193,7 @@ def create_app(settings: Settings | None = None, adapters: Mapping[str, AsrAdapt
                 if (not isinstance(upload, UploadFile) or set(form) - {"file", "mode", "matrix"}
                         or len(form.multi_items()) != len(form) or mode not in MODES
                         or matrix not in tuple(map(str, MATRICES))):
-                    return error(422, "invalid_form", "Передайте один файл WAV, допустимый режим и размер матрицы.")
+                    return error(422, "invalid_form", "Передайте один аудиофайл, допустимый режим и размер матрицы.")
                 failure = None
                 async with create_task_group() as task_group:
                     task_group.start_soon(watch_disconnect)
@@ -192,7 +211,11 @@ def create_app(settings: Settings | None = None, adapters: Mapping[str, AsrAdapt
         except MaskingCancelled:
             return Response(status_code=499)
         except TimeoutError:
-            return error(504, "masking_timeout", "Истекло время тестовой обработки.")
+            return error(504, "masking_timeout", "Истекло время обработки.")
+        except WorkerUnavailable:
+            return error(503, "masking_unavailable", "Исполнитель маскирования недоступен.")
+        except WorkerFailed:
+            return error(502, "masking_failed", "Исполнитель маскирования не вернул корректный результат.")
         except HTTPException:
             return error(422, "invalid_form", "Некорректный multipart-запрос.")
         except UploadTooLarge:
@@ -200,11 +223,11 @@ def create_app(settings: Settings | None = None, adapters: Mapping[str, AsrAdapt
         except EmptyUpload:
             return error(422, "empty_audio", "Аудиофайл пуст.")
         except InvalidAudio:
-            return error(415, "invalid_audio", "Нужен непустой WAV PCM в пределах допустимой длительности.")
+            return error(415, "invalid_audio", "Не удалось декодировать аудио. Проверьте формат, целостность и длительность записи.")
         except AudioPreparationUnavailable:
-            return error(503, "audio_preparation_unavailable", "Преобразование WAV недоступно.")
+            return error(503, "audio_preparation_unavailable", "Преобразование аудио недоступно. Для этого файла нужен настроенный FFmpeg.")
         except Exception:
-            return error(500, "masking_failed", "Не удалось выполнить тестовую обработку.")
+            return error(500, "masking_failed", "Не удалось выполнить обработку.")
         finally:
             cancelled.set()
             masking_slot.release()

@@ -111,25 +111,35 @@ it('preserves language and theme through navigation and resets language on fresh
   expect(screen.getByText(/Модель:/)).toHaveTextContent('GigaAM-Multilingual CTC 220M');
 });
 
-it('sends masking parameters, plays two marked WAVs and transcribes a test copy', async () => {
+it.each(['test', 'real'] as const)('processes %s results, plays both files and transcribes the demasked WAV', async (backendMode) => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  const test = backendMode === 'test';
+  const prefix = test ? 'test-' : '';
+  const notice = test ? maskingTestNotice : null;
   const source = syntheticWav();
   const bytes = new Uint8Array(await readBytes(source));
   const base64 = btoa(String.fromCharCode(...bytes));
   const fetcher = vi.fn<typeof fetch>(async (url) => {
-    if (url === '/api/masking/status') return Response.json({ test_mode: true, notice: maskingTestNotice });
+    if (url === '/api/masking/status') return Response.json({ available: true, test_mode: test, notice });
     if (url === '/api/asr/transcribe') return Response.json({ model: 'gigaam-multi', language: 'ru', text: 'Текст тестовой копии' });
+    if (url === '/api/quality/status') return Response.json({
+      metrics: { PESQ: { status: 'available' }, ViSQOL: { status: 'available' }, ViSQOL_LATTICE: { status: 'unavailable' } },
+    });
+    if (url === '/api/quality/evaluate') return Response.json({ comparisons: {
+      masked: { PESQ: { status: 'success', value: 4.321 }, ViSQOL: { status: 'success', value: 3.2 },
+        ViSQOL_LATTICE: { status: 'unavailable', message: 'Модель недоступна.' } },
+    } });
     return Response.json({
-      test_mode: true, masking_performed: false, notice: maskingTestNotice, mode: 'one-sided',
+      test_mode: test, masking_performed: !test, notice, mode: 'one-sided',
       selected_matrix: 128, applied_matrix: 64,
-      masked: { file_name: 'test-masked.wav', media_type: 'audio/wav', base64 },
-      demasked: { file_name: 'test-demasked.wav', media_type: 'audio/wav', base64 },
+      masked: { file_name: `${prefix}masked.wav`, media_type: 'audio/wav', base64 },
+      demasked: { file_name: `${prefix}demasked.wav`, media_type: 'audio/wav', base64 },
     });
   });
   vi.stubGlobal('fetch', fetcher);
   const user = userEvent.setup();
   render(<App />);
-  expect(await screen.findByText(maskingTestNotice)).toBeInTheDocument();
+  expect(await screen.findByText(test ? maskingTestNotice : 'Маскирование доступно')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [source] } });
   await user.click(screen.getByText('Параметры маскирования', { exact: false }));
   const parameters = within(screen.getByRole('group', { name: 'Параметры маскирования' }));
@@ -144,30 +154,47 @@ it('sends masking parameters, plays two marked WAVs and transcribes a test copy'
   expect(matrix).toHaveValue('64');
   await user.selectOptions(mode, 'one-sided');
   await user.selectOptions(matrix, '128');
-  await user.click(screen.getByRole('button', { name: /Запустить тестовую обработку/ }));
-  expect(await screen.findByRole('heading', { name: 'Результат тестовой обработки' })).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: test ? /Запустить тестовую обработку/ : /Начать маскирование/ }));
+  expect(await screen.findByRole('heading', { name: test ? 'Результат тестовой обработки' : 'Результат обработки' })).toBeInTheDocument();
+  if (!test) expect(screen.queryByText(maskingTestNotice)).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Оценка качества аудио' })).toBeInTheDocument();
+  expect(fetcher.mock.calls.some(([url]) => url === '/api/quality/evaluate')).toBe(false);
   const form = fetcher.mock.calls[1][1]?.body as FormData;
   expect(fetcher.mock.calls[1][0]).toBe('/api/masking/process');
   expect(form.get('file')).toBe(source);
   expect(form.get('mode')).toBe('one-sided');
   expect(form.get('matrix')).toBe('128');
   expect(screen.getByText(/уменьшен с 128 до 64/)).toBeInTheDocument();
-  expect(screen.getByText(/Выбранный размер матрицы: 128. Применённый размер в тестовом режиме: 64/)).toBeInTheDocument();
+  expect(screen.getByText(/Выбранный размер матрицы: 128. Применённый размер( в тестовом режиме)?: 64/)).toBeInTheDocument();
   const recording = screen.getByRole('combobox', { name: 'Аудиозапись' });
   expect(recording).toHaveValue('original');
   await user.selectOptions(recording, 'masked');
   expect(screen.getByLabelText('Маскированное аудио', { selector: 'audio' })).toHaveAttribute('controls');
-  expect(screen.getByText('Тестовая маскированная копия')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Скачать аудио' })).toHaveAttribute('download', 'fixture-masked.wav');
+  if (test) expect(screen.getByText('Тестовая маскированная копия')).toBeInTheDocument();
+  else expect(screen.queryByText('Тестовая маскированная копия')).not.toBeInTheDocument();
   await user.selectOptions(recording, 'demasked');
   expect(screen.getByLabelText('Демаскированное аудио', { selector: 'audio' })).toHaveAttribute('controls');
-  expect(screen.getByText('Тестовая демаскированная копия')).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: 'Скачать аудио' })).toHaveAttribute('download', 'fixture-demasked.wav');
+  if (test) expect(screen.getByText('Тестовая демаскированная копия')).toBeInTheDocument();
+  else expect(screen.queryByText('Тестовая демаскированная копия')).not.toBeInTheDocument();
   await user.selectOptions(recording, 'original');
-  await user.click(screen.getByRole('radio', { name: 'Тестовый демаскированный WAV' }));
+  await user.click(screen.getByRole('radio', { name: test ? 'Тестовый демаскированный WAV' : 'Демаскированное аудио' }));
   await user.click(screen.getByRole('button', { name: 'Запустить транскрибацию' }));
   expect(await screen.findByText('Текст тестовой копии')).toBeInTheDocument();
-  const asrForm = fetcher.mock.calls[2][1]?.body as FormData;
-  expect((asrForm.get('file') as File).name).toBe('test-demasked.wav');
+  const asrForm = fetcher.mock.calls.find(([url]) => url === '/api/asr/transcribe')?.[1]?.body as FormData;
+  expect((asrForm.get('file') as File).name).toBe(`${prefix}demasked.wav`);
   expect(new Uint8Array(await readBytes(asrForm.get('file') as File))).toEqual(bytes);
+  await user.click(screen.getByRole('button', { name: 'Оценить качество' }));
+  expect(await screen.findByText('4,321')).toBeInTheDocument();
+  expect(screen.getByText('3,2')).toBeInTheDocument();
+  expect(screen.getByText('Недоступно')).toBeInTheDocument();
+  const qualityForm = fetcher.mock.calls.find(([url]) => url === '/api/quality/evaluate')?.[1]?.body as FormData;
+  expect([...qualityForm.keys()]).toEqual(['pairs', 'original', 'masked']);
+  expect(qualityForm.getAll('pairs')).toEqual(['masked']);
+  for (const file of [qualityForm.get('original'), qualityForm.get('masked')]) {
+    expect(new Uint8Array(await readBytes(file as File))).toEqual(bytes);
+  }
   await user.click(screen.getByRole('button', { name: 'Вернуться к форме' }));
   await user.click(screen.getByText('Параметры маскирования', { exact: false }));
   expect(screen.getByRole('combobox', { name: 'Тип маскирования' })).toBeEnabled();
@@ -201,7 +228,7 @@ it('cancels an active masking request and never renders a late result', async ()
   await user.click(screen.getByRole('button', { name: 'Отменить обработку' }));
   expect(fetcher.mock.calls[1][1]?.signal?.aborted).toBe(true);
   await act(async () => { finish(Response.json({ test_mode: true })); });
-  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Запрос тестовой обработки отменён'));
+  await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Запрос обработки отменён'));
   expect(screen.queryByRole('heading', { name: 'Результат тестовой обработки' })).not.toBeInTheDocument();
   expect(screen.getByText('fixture.wav')).toBeInTheDocument();
   expect(screen.getByRole('combobox', { name: 'Тип маскирования' })).toBeEnabled();
@@ -214,7 +241,7 @@ it('aborts the old request on navigation and leaves the new workspace usable', a
   let resolve!: (value: typeof late) => void;
   run.mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
   run.mockResolvedValueOnce({ status: 'error', message: 'Ошибка тестовой обработки.' });
-  services.masking = { available: async () => true, run };
+  services.masking = { available: async () => 'test', run };
   const user = userEvent.setup();
   render(<App adapters={services} />);
   await screen.findByText(maskingTestNotice);

@@ -45,7 +45,7 @@ export function useWorkspace(adapter: MaskingAdapter) {
       if (response.status === 'success') { setResult(response.value); setView('result'); }
       else setError(response.message);
     } catch {
-      if (request === revision.current) setError('Не удалось получить тестовый результат. Повторите попытку.');
+      if (request === revision.current) setError('Не удалось получить результат обработки. Повторите попытку.');
     } finally {
       if (request === revision.current) { controller.current = null; lock.current = false; setBusy(false); }
     }
@@ -54,7 +54,7 @@ export function useWorkspace(adapter: MaskingAdapter) {
     if (!controller.current) return;
     revision.current++;
     controller.current.abort(); controller.current = null;
-    lock.current = false; setBusy(false); setError('Запрос тестовой обработки отменён.');
+    lock.current = false; setBusy(false); setError('Запрос обработки отменён.');
   };
   const showForm = () => { if (!lock.current) { setView('form'); setError(''); } };
   const showResult = () => { if (!lock.current && result) { setView('result'); setError(''); } };

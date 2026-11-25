@@ -7,14 +7,14 @@ const failure = (message: string): OperationValue<AudioResult> => ({ status: 'er
 function httpError(status: number, body: unknown): OperationValue<AudioResult> {
   const code = object(body) && object(body.error) ? body.error.code : undefined;
   if (status === 503) return { status: 'unavailable', message:
-    code === 'masking_busy' ? 'Тестовая обработка занята. Повторите запрос позже.'
-      : code === 'audio_preparation_unavailable' ? 'Преобразование WAV на сервере недоступно.'
-        : 'Тестовая обработка недоступна.' };
+    code === 'masking_busy' ? 'Обработка занята. Повторите запрос позже.'
+      : code === 'audio_preparation_unavailable' ? 'Преобразование аудио недоступно. Для этого файла нужен настроенный FFmpeg.'
+        : 'Маскирование недоступно.' };
   if (status === 413) return failure('Аудиофайл превышает допустимый размер загрузки.');
-  if (status === 415) return failure('Выберите непустой WAV PCM допустимой длительности.');
-  if (status === 422) return failure('Проверьте файл WAV, режим и размер матрицы.');
-  if (status === 504) return failure('Истекло время тестовой обработки на сервере.');
-  return failure('Не удалось выполнить тестовую обработку.');
+  if (status === 415) return failure('Не удалось декодировать аудио. Проверьте формат, целостность и длительность записи.');
+  if (status === 422) return failure('Проверьте аудиофайл, режим и размер матрицы.');
+  if (status === 504) return failure('Истекло время обработки на сервере.');
+  return failure('Не удалось выполнить обработку.');
 }
 
 async function readWav(value: unknown, name: string, signal: AbortSignal): Promise<Blob> {
@@ -46,8 +46,12 @@ export function createHttpMaskingAdapter({ timeoutMs = 45000, fetcher }: {
       try {
         const response = await (fetcher ?? fetch)('/api/masking/status', { signal, cache: 'no-store' });
         const body: unknown = response.ok ? await response.json() : null;
-        return object(body) && body.test_mode === true && body.notice === maskingTestNotice;
-      } catch { return false; }
+        if (!object(body)) return 'unavailable';
+        if (body.test_mode === true && body.notice === maskingTestNotice
+          && (body.available === true || body.available === undefined)) return 'test';
+        if (body.available === true && body.test_mode === false && body.notice === null) return 'real';
+        return 'unavailable';
+      } catch { return 'unavailable'; }
     },
     async run(source, _outcome, options = { mode: 'two-sided', matrix: 64 }, signal) {
       const controller = new AbortController();
@@ -68,20 +72,23 @@ export function createHttpMaskingAdapter({ timeoutMs = 45000, fetcher }: {
         const body: unknown = await response.json().catch(() => null);
         controller.signal.throwIfAborted();
         if (!response.ok) return httpError(response.status, body);
-        if (!object(body) || body.test_mode !== true || body.masking_performed !== false || body.notice !== maskingTestNotice
+        const test = object(body) && body.test_mode === true && body.masking_performed === false && body.notice === maskingTestNotice;
+        const real = object(body) && body.test_mode === false && body.masking_performed === true && body.notice === null;
+        if (!object(body) || (!test && !real)
           || body.mode !== options.mode || body.selected_matrix !== options.matrix
           || typeof body.applied_matrix !== 'number' || !matrixSizes.some((size) => size === body.applied_matrix)
-          || body.applied_matrix > options.matrix) return failure('Сервер вернул некорректный тестовый результат.');
-        const fileName = 'test-masked.wav';
-        const demaskedFileName = 'test-demasked.wav';
+          || (test && body.applied_matrix > options.matrix)) return failure('Сервер вернул некорректный результат обработки.');
+        const fileName = test ? 'test-masked.wav' : 'masked.wav';
+        const demaskedFileName = test ? 'test-demasked.wav' : 'demasked.wav';
         const audio = await readWav(body.masked, fileName, controller.signal);
         const demasked = await readWav(body.demasked, demaskedFileName, controller.signal);
-        return { status: 'success', value: { id: crypto.randomUUID(), audio, fileName, demonstration: true,
-          testMasking: { options, appliedMatrix: body.applied_matrix as MatrixSize, demasked, demaskedFileName } } };
+        const details = { options, appliedMatrix: body.applied_matrix as MatrixSize, demasked, demaskedFileName };
+        return { status: 'success', value: { id: crypto.randomUUID(), audio, fileName, demonstration: test,
+          ...(test ? { testMasking: details } : { masking: details }) } };
       } catch {
-        if (timedOut) return failure('Истекло время ожидания тестовой обработки.');
-        if (controller.signal.aborted) return failure('Запрос тестовой обработки отменён.');
-        return failure('Не удалось получить тестовый результат от локального backend.');
+        if (timedOut) return failure('Истекло время ожидания обработки.');
+        if (controller.signal.aborted) return failure('Запрос обработки отменён.');
+        return failure('Не удалось получить результат от локального backend.');
       } finally {
         clearTimeout(timer);
         signal?.removeEventListener('abort', abort);

@@ -32,12 +32,18 @@ class Settings:
     cpu_threads: int = 4
     masking_stub: bool = False
     masking_timeout_seconds: float = 30
+    masking_runner_python: Path | None = None
+    masking_runner_script: Path | None = None
+    quality_python: Path | None = None
+    quality_timeout_seconds: float = 30
 
     def __post_init__(self) -> None:
         if self.max_file_bytes <= 0 or self.max_duration_seconds <= 0:
             raise ValueError("Upload limits must be positive")
         if not math.isfinite(self.masking_timeout_seconds) or self.masking_timeout_seconds <= 0:
             raise ValueError("Masking timeout must be positive and finite")
+        if not math.isfinite(self.quality_timeout_seconds) or self.quality_timeout_seconds <= 0:
+            raise ValueError("Quality timeout must be positive and finite")
         if (not math.isfinite(self.worker_timeout_seconds) or self.worker_timeout_seconds <= 0
                 or self.max_concurrent_asr <= 0 or self.max_worker_output_bytes <= 0 or self.cpu_threads <= 0):
             raise ValueError("Worker limits must be positive and finite")
@@ -46,6 +52,9 @@ class Settings:
     def from_env(cls) -> "Settings":
         temp = os.environ.get("AUDIOMASK_TEMP_DIRECTORY")
         ffmpeg = os.environ.get("AUDIOMASK_FFMPEG_PATH")
+        runner_python = os.environ.get("AUDIOMASK_MASKING_RUNNER_PYTHON")
+        runner_script = os.environ.get("AUDIOMASK_MASKING_RUNNER_SCRIPT")
+        quality_python = os.environ.get("AUDIOMASK_QUALITY_PYTHON")
         return cls(
             max_file_bytes=int(os.environ.get("AUDIOMASK_MAX_FILE_BYTES", 25 * 1024 * 1024)),
             max_duration_seconds=int(os.environ.get("AUDIOMASK_MAX_DURATION_SECONDS", 300)),
@@ -60,4 +69,8 @@ class Settings:
             masking_stub=(os.environ.get("AUDIOMASK_ENV") == "development"
                           and os.environ.get("AUDIOMASK_MASKING_STUB") == "1"),
             masking_timeout_seconds=float(os.environ.get("AUDIOMASK_MASKING_TIMEOUT_SECONDS", 30)),
+            masking_runner_python=Path(runner_python) if runner_python else None,
+            masking_runner_script=Path(runner_script) if runner_script else None,
+            quality_python=Path(quality_python) if quality_python else None,
+            quality_timeout_seconds=float(os.environ.get("AUDIOMASK_QUALITY_TIMEOUT_SECONDS", 30)),
         )

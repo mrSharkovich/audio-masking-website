@@ -81,7 +81,9 @@ export function ResultView(props: Props) {
       <button className="button secondary" type="button" onClick={props.onNew}>Загрузить другой файл</button>
     </div>
     <div className="additional-tools" key={props.result.id}>
-      <QualityPanel resultId={props.result.id} adapter={props.adapters.quality} settings={props.settings} />
+      <QualityPanel testMode={Boolean(test)} recordings={details ? {
+        original: props.source, masked: props.result.audio, demasked: details.demasked,
+      } : null} />
       <TranscriptionPanel source={props.source} maskedResult={props.result} adapter={props.adapters.transcription} audioLanguage={props.audioLanguage} onAudioLanguageChange={props.onAudioLanguageChange} />
     </div>
   </div>;

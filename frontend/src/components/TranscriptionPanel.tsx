@@ -11,6 +11,7 @@ interface Props {
 
 export function TranscriptionPanel({ source, maskedResult, adapter, audioLanguage, onAudioLanguageChange }: Props) {
   const test = maskedResult?.testMasking;
+  const details = test ?? maskedResult?.masking;
   const [selection, setSelection] = useState<TranscriptSelection>('original');
   const [state, setState] = useState<{ loading: boolean; value: TranscriptionResult | null; message: string }>({ loading: false, value: null, message: '' });
   const [copyMessage, setCopyMessage] = useState('');
@@ -34,11 +35,13 @@ export function TranscriptionPanel({ source, maskedResult, adapter, audioLanguag
       for (const item of selection === 'both' ? ['original', 'masked'] as const : [selection]) {
         if (!current()) return;
         const file = item === 'original' ? source
-          : item === 'demasked' ? (test ? new File([test.demasked], test.demaskedFileName, { type: 'audio/wav' }) : null)
+          : item === 'demasked' ? (details?.demasked.size ? new File([details.demasked], details.demaskedFileName, { type: 'audio/wav' }) : null)
             : maskedResult && (test || !maskedResult.demonstration)
               ? new File([maskedResult.audio], maskedResult.fileName, { type: maskedResult.audio.type }) : null;
         if (!file) {
-          value[item] = { status: 'unavailable', message: item === 'original' ? 'Выберите исходную аудиозапись.' : 'Реальная маскированная запись отсутствует. Распознавание этой записи недоступно.' };
+          value[item] = { status: 'unavailable', message: item === 'original' ? 'Выберите исходную аудиозапись.'
+            : item === 'demasked' ? 'Демаскированная запись отсутствует. Распознавание этой записи недоступно.'
+              : 'Реальная маскированная запись отсутствует. Распознавание этой записи недоступно.' };
         } else {
           value[item] = await adapter.transcribe(file, audioLanguage, controller.signal);
         }
@@ -70,7 +73,7 @@ export function TranscriptionPanel({ source, maskedResult, adapter, audioLanguag
     <fieldset className="source-options" disabled={state.loading}><legend>Какую запись распознать?</legend>
       {([{ value: 'original', label: 'Исходное аудио' }, { value: 'masked', label: test ? 'Тестовый маскированный WAV' : 'Маскированное аудио' },
         { value: 'both', label: test ? 'Исходный и тестовый маскированный WAV' : 'Оба файла' },
-        ...(test ? [{ value: 'demasked', label: 'Тестовый демаскированный WAV' } as const] : [])] as const).map((option) => <label key={option.value}><input type="radio" name="transcription-source" value={option.value} checked={selection === option.value} onChange={() => setSelection(option.value)} />{option.label}</label>)}
+        ...(details ? [{ value: 'demasked', label: test ? 'Тестовый демаскированный WAV' : 'Демаскированное аудио' } as const] : [])] as const).map((option) => <label key={option.value}><input type="radio" name="transcription-source" value={option.value} checked={selection === option.value} onChange={() => setSelection(option.value)} />{option.label}</label>)}
     </fieldset>
     <div className="form-actions">
       <button type="button" className="button secondary" disabled={state.loading} onClick={() => { void run(); }}>{state.loading ? 'Распознавание…' : 'Запустить транскрибацию'}</button>
@@ -80,7 +83,7 @@ export function TranscriptionPanel({ source, maskedResult, adapter, audioLanguag
     {state.value ? <div className="transcripts">{(['original', 'masked', 'demasked'] as const).map((sourceName) => {
       const item = state.value?.[sourceName];
       if (!item) return null;
-      return <article className="transcript" key={sourceName}><h4>{sourceName === 'original' ? 'Оригинал' : sourceName === 'demasked' ? 'Тестовая демаскированная копия' : test ? 'Тестовая маскированная копия' : 'После маскирования'}</h4>
+      return <article className="transcript" key={sourceName}><h4>{sourceName === 'original' ? 'Оригинал' : sourceName === 'demasked' ? test ? 'Тестовая демаскированная копия' : 'Демаскированное аудио' : test ? 'Тестовая маскированная копия' : 'После маскирования'}</h4>
         {item.status === 'success' ? <><p className="transcript-text">{item.value}</p><button type="button" className="text-button" onClick={() => { void copy(item.value); }}>Копировать {sourceName === 'original' ? 'текст оригинала' : 'текст результата'}</button></> : <p role={item.status === 'error' ? 'alert' : 'status'}>{item.message}</p>}
       </article>;
     })}</div> : null}

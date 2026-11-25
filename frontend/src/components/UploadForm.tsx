@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { AudioPlayer } from './AudioPlayer';
 import { matrixSizes } from '../types/audio';
-import type { MaskingOptions, MatrixSize } from '../types/audio';
+import type { MaskingAvailability, MaskingOptions, MatrixSize } from '../types/audio';
 
 interface Props {
   source: File | null;
@@ -10,7 +10,7 @@ interface Props {
   busy: boolean;
   error: string;
   hasResult: boolean;
-  demoEnabled: boolean;
+  availability: MaskingAvailability;
   options: MaskingOptions;
   onOptionsChange: (options: MaskingOptions) => void;
   onCancel: () => void;
@@ -33,6 +33,8 @@ function durationLabel(duration: number | null) {
 
 export function UploadForm(props: Props) {
   const { source, sourceUrl, busy, error, onSelect } = props;
+  const available = props.availability !== 'unavailable';
+  const test = props.availability === 'test';
   const input = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
@@ -40,7 +42,7 @@ export function UploadForm(props: Props) {
   return <form className="upload-form" aria-label="Форма маскирования" onSubmit={(event) => { event.preventDefault(); if (!busy) props.onRun(); }}>
     <div className="section-heading">
       <div><span className="section-index" aria-hidden="true">01</span><h2 ref={props.headingRef} tabIndex={-1}>Исходная запись</h2></div>
-      <span className="status-chip">{busy ? 'Тестовый запрос' : source ? 'Файл выбран' : 'Ожидает файл'}</span>
+      <span className="status-chip">{busy ? test ? 'Тестовый запрос' : 'Обработка' : source ? 'Файл выбран' : 'Ожидает файл'}</span>
     </div>
     <div
       className={`dropzone${dragging && !busy ? ' is-dragging' : ''}${busy ? ' is-locked' : ''}`}
@@ -57,7 +59,7 @@ export function UploadForm(props: Props) {
         onChange={(event) => { if (event.currentTarget.files) select(event.currentTarget.files); event.currentTarget.value = ''; }} />
       <button className="button secondary" type="button" disabled={busy} onClick={() => { if (!busy) input.current?.click(); }}>{source ? 'Заменить файл' : 'Выбрать файл'}</button>
     </div>
-    <p className="small-note">{props.demoEnabled ? 'Поддерживается WAV PCM. Файл отправляется локальному backend при запуске тестовой обработки или транскрибации.' : 'Файл остаётся в браузере до запуска транскрибации. Для ASR поддерживается WAV PCM.'}</p>
+    <p className="small-note">{available ? 'Для маскирования можно загрузить WAV, MP3, M4A, FLAC, OGG или AAC. Декодирование зависит от настроенного FFmpeg. Для транскрибации исходной записи по-прежнему нужен WAV PCM.' : 'Файл остаётся в браузере до запуска транскрибации. Для ASR поддерживается WAV PCM.'}</p>
     {source ? <div className="file-summary" key={`${source.name}:${source.lastModified}:${source.size}`}>
       <div className="file-line"><div className="file-info"><strong>{source.name}</strong><span>{sizeLabel(source.size)} <span aria-hidden="true">·</span> {durationLabel(duration)}</span></div>
         <button type="button" className="text-button danger" disabled={busy} onClick={() => { if (!busy) props.onClear(); }}>Удалить файл</button>
@@ -65,7 +67,7 @@ export function UploadForm(props: Props) {
       <AudioPlayer label="Предпрослушивание исходной записи" url={sourceUrl} onDuration={setDuration} />
     </div> : null}
     <details className="parameters"><summary>Параметры маскирования <span aria-hidden="true">＋</span></summary>
-      {props.demoEnabled ? <fieldset className="masking-fields" disabled={busy} aria-label="Параметры маскирования">
+      {available ? <fieldset className="masking-fields" disabled={busy} aria-label="Параметры маскирования">
         <label>Тип маскирования
           <select value={props.options.mode} onChange={(event) => props.onOptionsChange({ ...props.options, mode: event.currentTarget.value as MaskingOptions['mode'] })}>
             <option value="one-sided">Одностороннее</option>
@@ -79,10 +81,10 @@ export function UploadForm(props: Props) {
     </details>
     {error ? <p className="message error" role="alert">{error}</p> : null}
     <div className="form-actions">
-      <button className="button primary" type="submit" disabled={!source || busy}>{busy ? 'Тестовая обработка…' : props.demoEnabled ? 'Запустить тестовую обработку' : 'Начать маскирование'}<span aria-hidden="true">↗</span></button>
+      <button className="button primary" type="submit" disabled={!source || busy}>{busy ? test ? 'Тестовая обработка…' : 'Маскирование…' : test ? 'Запустить тестовую обработку' : 'Начать маскирование'}<span aria-hidden="true">↗</span></button>
       {busy ? <button className="button secondary" type="button" onClick={props.onCancel}>Отменить обработку</button> : null}
       {props.hasResult ? <button className="button secondary" type="button" disabled={busy} onClick={props.onShowResult}>Открыть текущий результат</button> : null}
     </div>
-    <p className="operation-status" role="status">{busy ? 'Идёт обработка аудио…' : props.demoEnabled ? 'Параметры применяются только в тестовом сценарии.' : 'Реальная обработка недоступна: подключение ещё не настроено.'}</p>
+    <p className="operation-status" role="status">{busy ? 'Идёт обработка аудио…' : test ? 'Параметры применяются только в тестовом сценарии.' : !available ? 'Маскирование недоступно: сервис не подключён.' : ''}</p>
   </form>;
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { createDemoAdapters } from '../adapters/demoAudio';
 import { createHttpMaskingAdapter } from '../adapters/httpMasking';
 import { createHttpTranscriptionAdapter } from '../adapters/httpTranscription';
@@ -60,11 +60,11 @@ export function ProcessPage({ adapters = defaultAdapters, audioLanguage, onAudio
 
   return <section className="workspace-section" id="processing" aria-labelledby="page-title">
         <div className="workspace-intro"><div><p className="studio-label"><span className="studio-dot" aria-hidden="true" />Аудиостудия</p><h1 id="page-title">Маскирование аудиозаписи</h1><p className="intro-copy">Загрузите запись, сравните звучание и исследуйте результат.</p></div></div>
-        <div className="demo-banner" role="note"><span className="demo-icon" aria-hidden="true">i</span><div>
-          <strong>{mode === 'test' ? 'Маскирование работает в тестовом режиме' : mode === 'real' ? 'Маскирование доступно' : 'Маскирование пока недоступно'}</strong>
+        {mode !== 'real' ? <div className="demo-banner" role="note"><span className="demo-icon" aria-hidden="true">i</span><div>
+          <strong>{mode === 'test' ? 'Маскирование работает в тестовом режиме' : 'Маскирование пока недоступно'}</strong>
           {mode === 'test' ? <span>{qualityNotice} Настоящее маскирование пока не выполняется.</span>
-            : mode === 'unavailable' ? <span>Локальный backend недоступен или маскирование в нём не подключено.</span> : null}
-        </div></div>
+            : <span>Локальный backend недоступен или маскирование в нём не подключено.</span>}
+        </div></div> : null}
         <div className="studio-frame"><div className="studio-topline"><span><span aria-hidden="true">●</span> AudioMask Studio</span><span>{mode === 'test' ? 'Тестовый режим' : mode === 'real' ? 'Маскирование подключено' : 'Сервис не подключён'}</span></div>
           <div className="workspace-content">
             {workspace.view === 'result' && workspace.result && workspace.source ? <>

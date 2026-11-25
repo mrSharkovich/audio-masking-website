@@ -1,4 +1,4 @@
-@layer reset, tokens, layout, components, responsive;
+﻿@layer reset, tokens, layout, components, responsive;
 
 @layer reset {
   * { box-sizing: border-box; }
@@ -138,6 +138,7 @@
   .form-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
   .message { padding: 14px 16px; border-radius: 8px; margin-top: 16px; font-size: 14px; }
   .message.error { color: var(--danger); background: var(--danger-soft); border: 1px solid var(--danger); }
+  .matrix-notice { background: var(--accent-soft); border: 1px solid var(--border); }
   .operation-status { min-height: 20px; }
   .demo-controls { border-top: 1px solid var(--border); padding: 16px 28px; background: var(--surface-raised); border-radius: 0 0 var(--radius) var(--radius); }
   .demo-controls summary { color: var(--muted); font-size: 12px; }

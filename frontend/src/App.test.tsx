@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+﻿import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it, vi } from 'vitest';
 import { App } from './App';
@@ -88,7 +88,7 @@ it('rejects non-audio chooser and drop inputs before accepting a valid WAV', asy
   services.masking.available = async () => 'real';
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ metrics: {} })));
   render(<App adapters={services} />);
-  await screen.findByText('Маскирование доступно');
+  await screen.findByText('Маскирование подключено');
   const input = screen.getByLabelText('Аудиофайл');
   const accept = input.getAttribute('accept')?.split(',');
   for (const extension of ['wav', 'mp3', 'm4a', 'flac', 'ogg', 'aac', 'aiff', 'amr', 'ac3', 'eac3', 'au', 'mka', 'mkv', 'webm']) {
@@ -256,7 +256,8 @@ it.each(['test', 'real'] as const)('processes %s results, plays both files and t
   vi.stubGlobal('fetch', fetcher);
   const user = userEvent.setup();
   render(<App />);
-  expect(await screen.findByText(test ? testBanner : 'Маскирование доступно')).toBeInTheDocument();
+  expect(await screen.findByText(test ? testBanner : 'Маскирование подключено')).toBeInTheDocument();
+  expect(screen.queryByText('Маскирование доступно')).not.toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [source] } });
   const parameters = within(screen.getByRole('group', { name: 'Параметры маскирования' }));
   const mode = parameters.getByRole('combobox', { name: 'Тип маскирования' });
@@ -377,7 +378,7 @@ it('preserves transcripts across tools and masking attempts until the recording 
   );
   const user = userEvent.setup();
   render(<App adapters={services} />);
-  await screen.findByText('Маскирование доступно');
+  await screen.findByText('Маскирование подключено');
   const upload = () => fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [syntheticWav('same.wav')] } });
   const mask = () => user.click(screen.getByRole('button', { name: /Начать маскирование/ }));
   const asr = () => user.click(screen.getByRole('button', { name: 'Запустить транскрибацию' }));

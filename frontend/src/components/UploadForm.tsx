@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import { AudioPlayer } from './AudioPlayer';
 import { matrixSizes } from '../types/audio';
 import type { MaskingAvailability, MaskingOptions, MatrixSize } from '../types/audio';
 import { audioAccept, unsupportedAudioDescription, unsupportedAudioTitle } from '../types/audioUpload';
+import { estimatePreparedSamples, minimumMatrixSize, readPreparedPcmSamples } from '../types/matrixCapacity';
 
 interface Props {
   source: File | null;
@@ -40,7 +41,27 @@ export function UploadForm(props: Props) {
   const [parametersOpen, setParametersOpen] = useState(Boolean(source));
   useEffect(() => setParametersOpen(Boolean(source)), [source]);
   const [dragging, setDragging] = useState(false);
-  const [duration, setDuration] = useState<number | null>(null);
+  const [metadata, setMetadata] = useState<{ url: string | undefined; duration: number | null }>();
+  const duration = metadata && metadata.url === sourceUrl ? metadata.duration : null;
+  const onDuration = useCallback((value: number | null) => {
+    setMetadata({ url: sourceUrl, duration: value });
+  }, [sourceUrl]);
+  const [pcm, setPcm] = useState<{ file: File; samples: number }>();
+  useEffect(() => {
+    if (!source || !available) return;
+    const controller = new AbortController();
+    void readPreparedPcmSamples(source, controller.signal).then((samples) => {
+      if (samples !== null && !controller.signal.aborted) setPcm({ file: source, samples });
+    }).catch(() => {});
+    return () => controller.abort();
+  }, [source, available]);
+  const exactSamples = pcm && pcm.file === source ? pcm.samples : null;
+  const estimatedSamples = duration !== null && duration > 0 ? estimatePreparedSamples(duration) : null;
+  const samples = exactSamples ?? estimatedSamples;
+  const minimum = samples === null ? undefined : minimumMatrixSize(samples);
+  const matrixNotice = minimum !== undefined && props.options.matrix > minimum
+    ? `${exactSamples === null ? 'По оценке браузера минимальный достаточный размер' : 'Минимальный достаточный размер'} — ${minimum}. Выбранная матрица может избыточно увеличить длительность результирующего аудио и вычислительную нагрузку.`
+    : '';
   const select = (files: FileList | readonly File[]) => { if (!busy) onSelect(files); };
   return <form className="upload-form" aria-label="Форма маскирования" onSubmit={(event) => { event.preventDefault(); if (!busy) props.onRun(); }}>
     <div className="section-heading">
@@ -67,7 +88,7 @@ export function UploadForm(props: Props) {
       <div className="file-line"><div className="file-info"><strong>{source.name}</strong><span>{sizeLabel(source.size)} <span aria-hidden="true">·</span> {durationLabel(duration)}</span></div>
         <button type="button" className="text-button danger" disabled={busy} onClick={() => { if (!busy) props.onClear(); }}>Удалить файл</button>
       </div>
-      <AudioPlayer label="Предпрослушивание исходной записи" url={sourceUrl} onDuration={setDuration} />
+      <AudioPlayer label="Предпрослушивание исходной записи" url={sourceUrl} onDuration={onDuration} />
     </div> : null}
     <details className="parameters" open={parametersOpen}>
       <summary aria-expanded={parametersOpen} onClick={(event) => {
@@ -90,6 +111,14 @@ export function UploadForm(props: Props) {
         </select></label>
       </fieldset> : <p>Настройки появятся после согласования подключения алгоритма. Сейчас параметры не задаются.</p>}
     </details>
+    <div aria-live="polite">
+      {source && available && (matrixNotice || exactSamples === null) ? <p className="message matrix-notice">
+        {matrixNotice}
+        {exactSamples === null ? <>{matrixNotice ? ' ' : null}{estimatedSamples === null
+          ? 'Пока не удалось определить число отсчётов при 16 кГц и оценить избыточность матрицы.'
+          : 'Оценка основана на длительности записи. Точное число подготовленных отсчётов может отличаться.'}</> : null}
+      </p> : null}
+    </div>
     {error ? <p className="message error" role="alert">{error === unsupportedAudioTitle
       ? <><strong>{error}</strong><br />{unsupportedAudioDescription}</> : error}</p> : null}
     <div className="form-actions">

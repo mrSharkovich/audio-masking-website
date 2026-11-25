@@ -41,18 +41,23 @@ it('rejects missing text, wrong language/model and invalid JSON', async () => {
   expect(await createHttpTranscriptionAdapter({ fetcher }).transcribe(syntheticWav(), 'ru')).toMatchObject({ status: 'error' });
 });
 
-it('preserves empty recognition as an empty answer', async () => {
-  const fetcher = vi.fn().mockResolvedValue(response({ language: 'ru', model: 'gigaam-multi', text: '' }));
-  expect(await createHttpTranscriptionAdapter({ fetcher }).transcribe(syntheticWav(), 'ru')).toMatchObject({ status: 'empty' });
+it.each(['', ' \t\n'])('preserves blank recognition as an empty answer (%j)', async (text) => {
+  const fetcher = vi.fn().mockResolvedValue(response({ language: 'ru', model: 'gigaam-multi', text }));
+  expect(await createHttpTranscriptionAdapter({ fetcher }).transcribe(syntheticWav(), 'ru'))
+    .toEqual({ status: 'empty', message: 'Не удалось распознать речь' });
 });
 
-it('checks actual WAV signature, rejects MP3 disguised as WAV and empty uploads', async () => {
-  const fetcher = vi.fn();
+it('sends compressed audio unchanged for server validation and rejects empty uploads locally', async () => {
+  const fetcher = vi.fn().mockResolvedValue(response({ error: { code: 'invalid_audio' } }, 415));
   const adapter = createHttpTranscriptionAdapter({ fetcher });
-  for (const file of [new File(['ID3 test'], 'looks.wav', { type: 'audio/wav' }), new File([], 'empty.wav')]) {
-    expect(await adapter.transcribe(file, 'ru')).toMatchObject({ status: 'error' });
-  }
-  expect(fetcher).not.toHaveBeenCalled();
+  const mp3 = new File(['ID3 fixture'], 'speech.mp3', { type: 'audio/mpeg' });
+  expect(await adapter.transcribe(mp3, 'ru')).toMatchObject({ status: 'error', message: expect.stringContaining('декодировать') });
+  const sent = fetcher.mock.calls[0][1].body.get('file') as File;
+  expect(sent.name).toBe(mp3.name);
+  expect(sent.type).toBe(mp3.type);
+  expect(await readBytes(sent)).toEqual(await readBytes(mp3));
+  expect(await adapter.transcribe(new File([], 'empty.wav'), 'ru')).toMatchObject({ status: 'error' });
+  expect(fetcher).toHaveBeenCalledOnce();
 });
 
 it('handles network errors without exposing exceptions', async () => {

@@ -126,6 +126,12 @@
   .parameters { border-block: 1px solid var(--border); margin-top: 24px; padding-block: 16px; }
   summary { cursor: pointer; font-size: 14px; font-weight: 600; }
   .parameters summary { display: flex; justify-content: space-between; }
+  .parameters-indicator {
+    display: block; align-self: center; width: 0; height: 0; margin-inline: 4px;
+    border-block: 5px solid transparent; border-inline-start: 7px solid currentColor;
+    transform-origin: 35% 50%; transition: transform 140ms ease;
+  }
+  .parameters[open] .parameters-indicator { transform: rotate(90deg); }
   .parameters p { margin-top: 12px; color: var(--muted); font-size: 14px; max-width: 70ch; }
   .masking-fields { display: grid; gap: 12px; margin-top: 12px; }
   .masking-fields label { font-size: 14px; }
@@ -146,6 +152,7 @@
   .recording-selector { display: block; margin-bottom: 16px; font-size: 14px; font-weight: 600; }
   .player-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
   .player-title-row .player-label { margin-bottom: 0; }
+  .player-title-row > .audio-download:only-child { margin-inline-start: auto; }
   .button.audio-download { flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; padding: 0; }
   .audio-download:focus-visible { outline: 3px solid var(--focus); }
   .audio-download:active { transform: translateY(1px); }
@@ -155,13 +162,36 @@
   .result-navigation > .text-button { margin-right: auto; }
   .additional-tools { margin-top: 32px; border-top: 1px solid var(--border); }
   .auxiliary-panel { padding-top: 28px; }
-  .auxiliary-panel + .auxiliary-panel { margin-top: 28px; border-top: 1px solid var(--border); }
+  .auxiliary-panel + .auxiliary-panel, .result-view + .auxiliary-panel { margin-top: 28px; border-top: 1px solid var(--border); }
   .panel-title { flex-wrap: wrap; }
+  .panel-title:has(.save-file-control) { flex-wrap: nowrap; }
+  .save-file-control { margin-inline-start: auto; }
+  .save-file-button.button { display: grid; place-items: center; width: 36px; min-height: 36px; padding: 0; }
+  .panel-title .quiet-tag:has(+ .save-file-control) { margin-left: 0; }
   .quiet-tag { margin-left: auto; }
   .auxiliary-panel > p { font-size: 14px; color: var(--muted); margin: 12px 0 18px; max-width: 80ch; }
+  .pending-stage { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .pending-stage + .pending-stage { margin-top: 16px; }
+  .pending-stage > p { margin: 8px 0 0; }
   .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
   .quality-pairs { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-block: 12px; }
   .quality-pairs label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
+  .transcription-sources { border: 0; padding: 0; min-inline-size: 0; }
+  .transcription-sources legend { padding: 0; font-size: 14px; font-weight: 600; }
+  .quality-info-trigger { padding: 0; background: transparent; cursor: pointer; }
+  .quality-info {
+    position: fixed; z-index: 10; inset: 0; margin: auto; box-sizing: border-box;
+    width: min(460px, calc(100% - 24px)); height: max-content; max-height: calc(100dvh - 24px);
+    overflow: auto; overscroll-behavior: contain; padding: 16px;
+    background: var(--surface-raised); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; box-shadow: 0 8px 28px #0003; font-size: 14px;
+  }
+  .quality-info .panel-title { justify-content: space-between; }
+  .quality-info h4, .quality-info dd { margin: 0; }
+  .quality-info dt { margin-top: 8px; font-weight: 650; }
+  .quality-info p { margin: 8px 0 0; }
+  .quality-info > h4 { margin-top: 12px; }
+  .quality-info ul { margin: 4px 0; padding-inline-start: 20px; }
   .quality-comparison { margin-top: 16px; }
   .quality-comparison h4 { margin: 0 0 8px; font-size: 14px; }
   .quality-comparison .metrics { margin-top: 0; }
@@ -173,6 +203,12 @@
   .metric strong { font-size: 14px; }
   .metric-value { font-size: 30px; letter-spacing: -1px; margin: 4px 0; color: var(--accent); }
   .metric > span:last-child { font-size: 12px; color: var(--muted); }
+  .metric > span.metric-interpretation {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: hsl(var(--quality-hue) 73% 25%);
+  }
+  :root[data-theme='dark'] .metric > span.metric-interpretation { color: hsl(var(--quality-hue) 73% 72%); }
+  .metric-dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
   .source-options { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 18px 0; }
   .source-options legend { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
   .source-options label { min-height: 44px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
@@ -180,6 +216,8 @@
   .transcript { background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
   .transcript p { color: var(--muted); margin-top: 10px; font-size: 14px; }
   .transcript-text { white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+  .transcript .transcript-empty { color: #795400; }
+  :root[data-theme='dark'] .transcript .transcript-empty { color: #f1c66c; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
   .skip-link { position: fixed; top: 12px; left: 12px; z-index: 10; background: var(--surface); padding: 12px; border: 2px solid var(--accent); border-radius: 6px; transform: translateY(-180%); }
   .skip-link:focus { transform: translateY(0); }
@@ -231,6 +269,9 @@
     .panel-title { gap: 8px; }
     .panel-title h3 { font-size: 17px; }
     .quiet-tag { margin-left: 38px; }
+    .panel-title:has(> .quiet-tag + .save-file-control) { display: grid; grid-template-columns: auto 1fr auto; }
+    .panel-title > .quiet-tag:has(+ .save-file-control) { grid-column: 2; grid-row: 2; justify-self: start; }
+    .panel-title > .quiet-tag + .save-file-control { grid-column: 3; grid-row: 1; }
     .how-section { padding-top: 48px; }
     .steps { grid-template-columns: 1fr; gap: 24px; margin-top: 24px; }
     .steps li { padding-top: 18px; }

@@ -1,5 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import type { AsrMaskedAudio, AudioLanguage, TranscriptSelection, TranscriptionAdapter, TranscriptionResult } from '../types/audio';
+import { useLayoutEffect, useRef, useState } from 'react';
+import type { AsrMaskedAudio, AudioLanguage, OperationValue, TranscriptSource, TranscriptionAdapter } from '../types/audio';
+import { emptyTranscriptionTitle } from '../types/audio';
+import { SaveFileButton } from './SaveFileButton';
+
+const sources = ['original', 'masked', 'demasked'] as const;
+const labels = { original: 'Исходная запись', masked: 'Маскированная запись', demasked: 'Демаскированная запись' };
+const languages = { ru: 'Русский', en: 'English' } as const;
+const languageOrder = ['ru', 'en'] as const;
+const modelLabels = { ru: 'GigaAM-Multilingual CTC 220M', en: 'Whisper small multilingual' };
+const emptyDescription = 'Модель не смогла распознать текст в данной аудиозаписи';
+type Results = Partial<Record<TranscriptSource, { language: AudioLanguage; response: OperationValue<string> }>>;
 
 interface Props {
   source: File | null;
@@ -12,81 +22,127 @@ interface Props {
 export function TranscriptionPanel({ source, maskedResult, adapter, audioLanguage, onAudioLanguageChange }: Props) {
   const test = maskedResult?.testMasking;
   const details = test ?? maskedResult?.masking;
-  const [selection, setSelection] = useState<TranscriptSelection>('original');
-  const [state, setState] = useState<{ loading: boolean; value: TranscriptionResult | null; message: string }>({ loading: false, value: null, message: '' });
+  const masked = maskedResult?.audio.size && (test || !maskedResult.demonstration) ? maskedResult.audio : null;
+  const demasked = details?.demasked.size ? details.demasked : null;
+  const available = { original: Boolean(source?.size), masked: Boolean(masked), demasked: Boolean(demasked) };
+  const [selection, setSelection] = useState<TranscriptSource[]>(['original']);
+  const selected = sources.filter((item) => selection.includes(item) && available[item]);
+  const [operation, setOperation] = useState({ loading: false, message: '' });
+  const [results, setResults] = useState<Results>({});
   const [copyMessage, setCopyMessage] = useState('');
   const request = useRef<AbortController | null>(null);
-  useEffect(() => {
-    setState({ loading: false, value: null, message: '' });
+  const previous = useRef({ source, masked, demasked });
+  const titles = { original: 'Оригинал', masked: test ? 'Тестовая маскированная копия' : 'После маскирования',
+    demasked: test ? 'Тестовая демаскированная копия' : 'Демаскированное аудио' };
+  const entries = sources.flatMap((item) => {
+    const entry = results[item];
+    return entry ? [{ item, ...entry }] : [];
+  });
+
+  function report() {
+    return entries.map(({ item, language, response }) => {
+      const body = response.status === 'success' ? response.value : response.status === 'empty' ? emptyDescription
+        : `${response.status === 'unavailable' ? 'Недоступно' : 'Ошибка'}: ${response.message}`;
+      return [titles[item], `Язык: ${languages[language]}`, `Модель: ${modelLabels[language]}`, body].join('\n');
+    }).join('\n\n') + '\n';
+  }
+
+  useLayoutEffect(() => {
+    const old = previous.current;
+    previous.current = { source, masked, demasked };
+    if (old.source !== source) {
+      setSelection(['original']);
+      setResults({});
+    } else {
+      if (old.masked !== masked || old.demasked !== demasked) {
+        setResults((current) => {
+          const next = { ...current };
+          if (old.masked !== masked) delete next.masked;
+          if (old.demasked !== demasked) delete next.demasked;
+          return next;
+        });
+        setSelection((items) => items.filter((item) => item === 'original'
+          || (item === 'masked' ? masked : demasked)));
+      }
+    }
+    setOperation({ loading: false, message: '' });
     setCopyMessage('');
     return () => { request.current?.abort(); request.current = null; };
-  }, [source, maskedResult, adapter, audioLanguage, selection]);
+  }, [source, masked, demasked, adapter]);
 
   const run = async () => {
-    if (request.current) return;
+    if (request.current || !selected.length) return;
     const controller = new AbortController();
     request.current = controller;
     const current = () => request.current === controller && !controller.signal.aborted;
-    setState({ loading: true, value: null, message: '' });
+    setOperation({ loading: true, message: '' });
+    setResults({});
     setCopyMessage('');
-    const value: TranscriptionResult = {};
     try {
       // Sequential requests respect the backend's shared ru/en concurrency limit.
-      for (const item of selection === 'both' ? ['original', 'masked'] as const : [selection]) {
+      for (const item of selected) {
         if (!current()) return;
         const file = item === 'original' ? source
           : item === 'demasked' ? (details?.demasked.size ? new File([details.demasked], details.demaskedFileName, { type: 'audio/wav' }) : null)
             : maskedResult && (test || !maskedResult.demonstration)
               ? new File([maskedResult.audio], maskedResult.fileName, { type: maskedResult.audio.type }) : null;
-        if (!file) {
-          value[item] = { status: 'unavailable', message: item === 'original' ? 'Выберите исходную аудиозапись.'
-            : item === 'demasked' ? 'Демаскированная запись отсутствует. Распознавание этой записи недоступно.'
-              : 'Реальная маскированная запись отсутствует. Распознавание этой записи недоступно.' };
-        } else {
-          value[item] = await adapter.transcribe(file, audioLanguage, controller.signal);
+        if (!file) continue;
+        let response: OperationValue<string>;
+        try {
+          response = await adapter.transcribe(file, audioLanguage, controller.signal);
+        } catch {
+          response = { status: 'error', message: 'Не удалось выполнить распознавание. Проверьте доступность локального backend.' };
         }
-        if (current()) setState({ loading: true, value: { ...value }, message: '' });
+        if (!current()) return;
+        setResults((saved) => ({ ...saved, [item]: { language: audioLanguage, response } }));
       }
-      if (current()) setState({ loading: false, value, message: '' });
-    } catch {
-      if (current()) setState({ loading: false, value: null, message: 'Не удалось выполнить распознавание. Проверьте доступность локального backend.' });
+      if (current()) setOperation({ loading: false, message: '' });
     } finally {
       if (request.current === controller) request.current = null;
     }
   };
   const cancel = () => {
     request.current?.abort(); request.current = null;
-    setState({ loading: false, value: null, message: 'Запрос распознавания отменён.' });
+    setOperation({ loading: false, message: 'Запрос распознавания отменён.' });
   };
   const copy = async (text: string) => {
     try { await navigator.clipboard.writeText(text); setCopyMessage('Текст скопирован.'); }
     catch { setCopyMessage('Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.'); }
   };
   return <section className="auxiliary-panel" aria-labelledby="transcription-heading">
-    <div className="panel-title"><span className="section-index" aria-hidden="true">04</span><h3 id="transcription-heading">Транскрибация</h3><span className="quiet-tag">Необязательно</span></div>
+    <div className="panel-title"><span className="section-index" aria-hidden="true">04</span><h3 id="transcription-heading">Транскрибация</h3><span className="quiet-tag">Необязательно</span>
+      <SaveFileButton label="Сохранить транскрипции" filename="audiomask-transcripts.txt" extension=".txt"
+        disabled={operation.loading} content={entries.length ? report : undefined} />
+    </div>
     <p>Текст отдельно для каждой записи. Аудиофайл отправляется локальному backend только при запуске распознавания.</p>
-    <fieldset className="source-options" disabled={state.loading}><legend>Язык аудиозаписи</legend>
-      {([{ value: 'ru', label: 'Русский' }, { value: 'en', label: 'English' }] as const).map((option) => <label key={option.value}><input type="radio" name="transcription-language" value={option.value} checked={audioLanguage === option.value} onChange={() => onAudioLanguageChange(option.value)} />{option.label}</label>)}
+    <fieldset className="source-options" disabled={operation.loading}><legend>Язык аудиозаписи</legend>
+      {languageOrder.map((language) => <label key={language}><input type="radio" name="transcription-language" value={language} checked={audioLanguage === language} onChange={() => onAudioLanguageChange(language)} />{languages[language]}</label>)}
     </fieldset>
-    <p className="small-note">Модель: {audioLanguage === 'ru' ? 'GigaAM-Multilingual CTC 220M' : 'Whisper small multilingual'}. Модель выбирает сервер по языку.</p>
-    <p className="small-note">ASR принимает WAV PCM 8/16/24/32 бит, mono/stereo, 8–192 кГц. Backend подготавливает 16 кГц mono PCM16. MP3 и другие форматы пока не поддерживаются.</p>
-    <fieldset className="source-options" disabled={state.loading}><legend>Какую запись распознать?</legend>
-      {([{ value: 'original', label: 'Исходное аудио' }, { value: 'masked', label: test ? 'Тестовый маскированный WAV' : 'Маскированное аудио' },
-        { value: 'both', label: test ? 'Исходный и тестовый маскированный WAV' : 'Оба файла' },
-        ...(details ? [{ value: 'demasked', label: test ? 'Тестовый демаскированный WAV' : 'Демаскированное аудио' } as const] : [])] as const).map((option) => <label key={option.value}><input type="radio" name="transcription-source" value={option.value} checked={selection === option.value} onChange={() => setSelection(option.value)} />{option.label}</label>)}
+    <p className="small-note">Модель: {modelLabels[audioLanguage]}. Модель выбирает сервер по языку.</p>
+    <p className="small-note">Backend подготавливает аудио в WAV 16 кГц mono PCM16. Для MP3, M4A, FLAC, OGG и других поддерживаемых сжатых форматов нужен FFmpeg.</p>
+    <fieldset className="quality-pairs transcription-sources" disabled={operation.loading}><legend>Какие записи распознать?</legend>
+      {sources.map((item) => <label key={item}><input type="checkbox" disabled={!available[item]}
+        checked={selection.includes(item)} onChange={(event) => {
+          const checked = event.currentTarget.checked;
+          setSelection((items) => checked ? [...items, item] : items.filter((name) => name !== item));
+        }} />{labels[item]}</label>)}
     </fieldset>
     <div className="form-actions">
-      <button type="button" className="button secondary" disabled={state.loading} onClick={() => { void run(); }}>{state.loading ? 'Распознавание…' : 'Запустить транскрибацию'}</button>
-      {state.loading ? <button type="button" className="button secondary" onClick={cancel}>Отменить запрос</button> : null}
+      <button type="button" className="button secondary" disabled={operation.loading || !selected.length} onClick={() => { void run(); }}>{operation.loading ? 'Распознавание…' : 'Запустить транскрибацию'}</button>
+      {operation.loading ? <button type="button" className="button secondary" onClick={cancel}>Отменить запрос</button> : null}
     </div>
-    <div role="status" aria-live="polite">{state.loading ? <p>Ожидание ответа локального ASR…</p> : state.message ? <p>{state.message}</p> : null}</div>
-    {state.value ? <div className="transcripts">{(['original', 'masked', 'demasked'] as const).map((sourceName) => {
-      const item = state.value?.[sourceName];
-      if (!item) return null;
-      return <article className="transcript" key={sourceName}><h4>{sourceName === 'original' ? 'Оригинал' : sourceName === 'demasked' ? test ? 'Тестовая демаскированная копия' : 'Демаскированное аудио' : test ? 'Тестовая маскированная копия' : 'После маскирования'}</h4>
-        {item.status === 'success' ? <><p className="transcript-text">{item.value}</p><button type="button" className="text-button" onClick={() => { void copy(item.value); }}>Копировать {sourceName === 'original' ? 'текст оригинала' : 'текст результата'}</button></> : <p role={item.status === 'error' ? 'alert' : 'status'}>{item.message}</p>}
-      </article>;
-    })}</div> : null}
+    <div role="status" aria-live="polite">{operation.loading ? <p>Ожидание ответа локального ASR…</p> : operation.message ? <p>{operation.message}</p> : null}</div>
+    {entries.length > 0 ? <div className="transcripts">{entries.map(({ item, language, response }) =>
+      <article className="transcript" key={item}><h4>{titles[item]} · {languages[language]}</h4>
+        {response.status === 'success' ? <><p className="transcript-text">{response.value}</p><button type="button" className="text-button" onClick={() => { void copy(response.value); }}>Копировать {item === 'original' ? 'текст оригинала' : 'текст результата'}</button></> : null}
+        {response.status === 'empty' ? <p className="transcript-empty" role="status"><strong>{emptyTranscriptionTitle}</strong><br />
+          {emptyDescription}.<br />
+          <span className="small-note">{modelLabels[language]}</span>
+        </p> : null}
+        {response.status === 'error' || response.status === 'unavailable'
+          ? <p role={response.status === 'error' ? 'alert' : 'status'}>{response.message}</p> : null}
+      </article>
+    )}</div> : null}
     {copyMessage ? <p className="small-note" role="status">{copyMessage}</p> : null}
   </section>;
 }

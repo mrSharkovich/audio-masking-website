@@ -18,6 +18,7 @@ from test_api import wav
 STATUS = "/api/quality/status"
 EVALUATE = "/api/quality/evaluate"
 TEST_PAIRS = {"pairs": ["masked", "demasked"]}
+ALL_PAIRS = {"pairs": ["masked", "demasked", "masked_demasked"]}
 
 
 class QualityTests(unittest.TestCase):
@@ -41,6 +42,58 @@ class QualityTests(unittest.TestCase):
 
     def assert_clean(self):
         self.assertEqual(list(self.uploads.iterdir()), [])
+
+    def set_padding_inputs(self, *, original=60640, masked=65536, demasked=66000):
+        header = wav(frames=original)[:-2 * original]
+        pcm = (b"\x34\x12\xcc\xed" * original)[:2 * original]
+        self.files = {
+            "original": ("source.wav", header + pcm),
+            "masked": ("masked.wav", wav(frames=masked)),
+            "demasked": ("demasked.wav", wav(frames=demasked)),
+        }
+
+    def test_pads_from_the_same_original_independently_for_all_selected_pairs(self):
+        self.set_padding_inputs()
+        with TestClient(self.launch("padding")) as client:
+            response = client.post(EVALUATE, data=ALL_PAIRS, files=self.files)
+        self.assertEqual(response.status_code, 200, response.text)
+        comparisons = response.json()["comparisons"]
+        for pair, expected in (("masked", 2), ("demasked", 3)):
+            self.assertEqual(comparisons[pair], {
+                metric: {"status": "success", "value": expected + offset}
+                for metric, offset in (("PESQ", 0), ("ViSQOL", 0.1), ("ViSQOL_LATTICE", 0.2))
+            })
+        self.assertTrue(all(item["status"] == "error" and "различаются" in item["message"]
+                            for item in comparisons["masked_demasked"].values()))
+        self.assert_clean()
+
+    def test_padding_does_not_bypass_original_minimum_frames(self):
+        with TestClient(self.launch("padding")) as client:
+            for original in (3999, 15999):
+                with self.subTest(original=original):
+                    self.set_padding_inputs(original=original)
+                    response = client.post(EVALUATE, data={"pairs": "masked"},
+                                           files={name: self.files[name] for name in ("original", "masked")})
+                    self.assertEqual(response.status_code, 200, response.text)
+                    scores = response.json()["comparisons"]["masked"]
+                    for metric in ("ViSQOL", "ViSQOL_LATTICE"):
+                        self.assertIn("слишком короткая", scores[metric]["message"])
+                    if original < 4000:
+                        self.assertIn("слишком короткая", scores["PESQ"]["message"])
+                    else:
+                        self.assertEqual(scores["PESQ"]["status"], "success")
+                    self.assert_clean()
+
+    def test_padding_preserves_upload_size_and_duration_limits(self):
+        self.set_padding_inputs()
+        files = {name: self.files[name] for name in ("original", "masked")}
+        for settings, status in (({"max_file_bytes": 100000}, 413),
+                                 ({"max_duration_seconds": 4, "max_file_bytes": 125000}, 413),
+                                 ({"max_duration_seconds": 4, "max_file_bytes": 200000}, 415)):
+            with self.subTest(status=status), TestClient(create_app(replace(self.settings, **settings))) as client:
+                response = client.post(EVALUATE, data={"pairs": "masked"}, files=files)
+                self.assertEqual(response.status_code, status, response.text)
+            self.assert_clean()
 
     def test_each_pair_alone_and_all_pairs_use_ordered_recordings(self):
         pairs = {"masked": ("original", "masked"),
@@ -103,6 +156,7 @@ class QualityTests(unittest.TestCase):
         self.assert_clean()
 
     def test_worker_timeout_preserves_other_metric(self):
+        self.set_padding_inputs()
         with TestClient(self.launch("slow", quality_timeout_seconds=1)) as client:
             scores = client.post(EVALUATE, data=TEST_PAIRS, files=self.files).json()["comparisons"]
         self.assertIn("Истекло время", scores["masked"]["PESQ"]["message"])
@@ -110,6 +164,7 @@ class QualityTests(unittest.TestCase):
         self.assert_clean()
 
     def test_worker_failure_preserves_other_metric_and_hides_stderr(self):
+        self.set_padding_inputs()
         with TestClient(self.launch("crash")) as client:
             response = client.post(EVALUATE, data=TEST_PAIRS, files=self.files)
         self.assertEqual(response.status_code, 200)
@@ -120,6 +175,7 @@ class QualityTests(unittest.TestCase):
         self.assert_clean()
 
     def test_disconnect_cancels_process_and_cleans_uploads(self):
+        self.set_padding_inputs()
         app = self.launch("slow", quality_timeout_seconds=10)
         request = Request("POST", "http://localhost" + EVALUATE, data=TEST_PAIRS, files=self.files)
         payload = request.read()

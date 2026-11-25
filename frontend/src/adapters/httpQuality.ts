@@ -1,6 +1,12 @@
 import type { MetricName, QualityResult } from '../types/audio';
 
 export const qualityMetrics = ['PESQ', 'ViSQOL', 'ViSQOL_LATTICE'] as const;
+export const qualityMinimum = 1;
+export const qualityScales = {
+  PESQ: { max: 4.65, visualMax: 4.643888, label: 'PESQ' },
+  ViSQOL: { max: 5, visualMax: 5, label: 'ViSQOL' },
+  ViSQOL_LATTICE: { max: 5, visualMax: 5, label: 'ViSQOL с lattice' },
+} as const;
 export const qualityComparisons = ['masked', 'demasked', 'masked_demasked'] as const;
 export type QualityComparison = typeof qualityComparisons[number];
 const pairRecordings = {
@@ -11,6 +17,7 @@ const pairRecordings = {
 export type QualityRecordings = Record<'original' | 'masked' | 'demasked', Blob>;
 export type QualityScores = Partial<Record<QualityComparison, QualityResult>>;
 export type QualityAvailability = Record<MetricName, { status: 'available' | 'unavailable' | 'error'; message?: string }>;
+export type QualityProbe = QualityAvailability | 'checking' | 'error';
 
 export interface QualityEvaluationAdapter {
   status(signal: AbortSignal): Promise<QualityAvailability>;
@@ -26,7 +33,7 @@ const invalidResult = { status: 'error', message: 'Сервер вернул н�
 function score(value: unknown, metric: MetricName): QualityResult[MetricName] {
   const item = object(value);
   if (item.status === 'success' && typeof item.value === 'number' && Number.isFinite(item.value)
-      && item.value >= 1 && item.value <= (metric === 'PESQ' ? 4.65 : 5)) {
+      && item.value >= qualityMinimum && item.value <= qualityScales[metric].max) {
     return { status: 'success', value: item.value };
   }
   if ((item.status === 'error' || item.status === 'unavailable') && typeof item.message === 'string' && item.message) {

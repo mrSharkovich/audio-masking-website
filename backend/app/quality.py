@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from threading import BoundedSemaphore, Event
 from time import monotonic
 import math
+import wave
 
 from anyio import create_task_group
 from fastapi import APIRouter, Request
@@ -42,7 +43,8 @@ def failed(status: str, message: str) -> dict:
 
 
 def run_metric(settings: Settings, metric: str, checkpoint: Callable[[], None],
-               reference: Path | None = None, degraded: Path | None = None) -> dict:
+               reference: Path | None = None, degraded: Path | None = None,
+               *, unpadded_frames: int | None = None) -> dict:
     checkpoint()
     python = settings.quality_python
     unavailable = failed("unavailable", "Метрика не подключена или недоступна.")
@@ -51,6 +53,8 @@ def run_metric(settings: Settings, metric: str, checkpoint: Callable[[], None],
 
     request = {"metric": metric, "reference": str(reference) if reference else None,
                "degraded": str(degraded) if degraded else None}
+    if unpadded_frames is not None:
+        request["unpadded_frames"] = unpadded_frames
     try:
         code, output = run_worker_process(
             [str(python), "-I", "-u", str(SCRIPT)], SCRIPT.parent, request,
@@ -81,6 +85,23 @@ def run_metric(settings: Settings, metric: str, checkpoint: Callable[[], None],
         return failed("error", "Не удалось получить корректную оценку.")
 
 
+def write_padded_reference(source: Path, target: Path, padding: int, checkpoint: Callable[[], None]) -> None:
+    with wave.open(str(source), "rb") as original, wave.open(str(target), "wb") as padded:
+        padded.setparams(original.getparams())
+        remaining = original.getnframes()
+        padded.setnframes(remaining + padding)
+        while remaining:
+            checkpoint()
+            count = min(remaining, 16000)
+            padded.writeframesraw(original.readframes(count))
+            remaining -= count
+        while padding:
+            checkpoint()
+            count = min(padding, 16000)
+            padded.writeframesraw(bytes(count * original.getsampwidth()))
+            padding -= count
+
+
 def evaluate_uploads(uploads, pairs: list[str], settings: Settings, output_limit: int,
                      checkpoint: Callable[[], None], preparation_checkpoint: Callable[[], None]) -> dict:
     with TemporaryDirectory(prefix="audiomask-quality-", dir=settings.temp_directory) as directory:
@@ -105,18 +126,29 @@ def evaluate_uploads(uploads, pairs: list[str], settings: Settings, output_limit
             paths[name] = path
             lengths[name] = validate_wav(path, settings, checkpoint=preparation_checkpoint).frames
 
+        padded_references = {}
+        for pair in pairs:
+            reference, degraded = PAIRS[pair]
+            if reference == "original" and lengths[reference] < lengths[degraded]:
+                target = root / f"original-for-{degraded}.wav"
+                write_padded_reference(paths[reference], target, lengths[degraded] - lengths[reference],
+                                       preparation_checkpoint)
+                padded_references[pair] = target
+
         comparisons = {}
         for pair in pairs:
             reference, degraded = PAIRS[pair]
             scores = {}
             for metric, (_, _, minimum_frames) in METRICS.items():
                 checkpoint()
-                if lengths[reference] != lengths[degraded]:
+                if pair not in padded_references and lengths[reference] != lengths[degraded]:
                     item = failed("error", "Длительности записей после подготовки различаются.")
-                elif lengths[degraded] < minimum_frames:
+                elif min(lengths[reference], lengths[degraded]) < minimum_frames:
                     item = failed("error", "Запись слишком короткая для этой метрики.")
                 else:
-                    item = run_metric(settings, metric, checkpoint, paths[reference], paths[degraded])
+                    item = run_metric(settings, metric, checkpoint,
+                                      padded_references.get(pair, paths[reference]), paths[degraded],
+                                      unpadded_frames=lengths[reference] if pair in padded_references else None)
                 scores[metric] = item
             comparisons[pair] = scores
         return {"comparisons": comparisons}

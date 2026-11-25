@@ -1,20 +1,17 @@
 import { useState } from 'react';
 import type { RefObject } from 'react';
-import type { AudioAdapters, AudioLanguage, AudioResult, DemoSettings } from '../types/audio';
+import type { AudioResult } from '../types/audio';
+import type { QualityProbe } from '../adapters/httpQuality';
 import { maskingTestNotice } from '../types/audio';
 import { useObjectUrl } from '../hooks/useObjectUrl';
 import { AudioPlayer } from './AudioPlayer';
 import { audioDownloadName } from './audioDownloadName';
 import { QualityPanel } from './QualityPanel';
-import { TranscriptionPanel } from './TranscriptionPanel';
 
 interface Props {
   result: AudioResult;
   source: File;
-  adapters: AudioAdapters;
-  settings: DemoSettings;
-  audioLanguage: AudioLanguage;
-  onAudioLanguageChange: (language: AudioLanguage) => void;
+  qualityProbe?: QualityProbe;
   headingRef: RefObject<HTMLHeadingElement | null>;
   onForm: () => void;
   onNew: () => void;
@@ -51,7 +48,7 @@ function ResultAudio({ source, result }: Pick<Props, 'source' | 'result'>) {
         </select>
       </label>
       {available && track.note ? <span className="channel-badge">{track.note}</span> : null}
-      {url ? <AudioPlayer key={selection} label={track.title} url={url} mediaRef={pauseOnDetach}
+      {url ? <AudioPlayer key={selection} label={track.title} hideLabel url={url} mediaRef={pauseOnDetach}
         titleAction={<a className="button primary audio-download" href={url} download={name}
           title="Скачать аудио" aria-label="Скачать аудио">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -81,10 +78,11 @@ export function ResultView(props: Props) {
       <button className="button secondary" type="button" onClick={props.onNew}>Загрузить другой файл</button>
     </div>
     <div className="additional-tools" key={props.result.id}>
-      <QualityPanel testMode={Boolean(test)} recordings={details ? {
+      <QualityPanel testMode={Boolean(test)} probe={props.qualityProbe} recordingNames={{
+        original: props.source.name, masked: props.result.fileName, demasked: details?.demaskedFileName,
+      }} recordings={details ? {
         original: props.source, masked: props.result.audio, demasked: details.demasked,
       } : null} />
-      <TranscriptionPanel source={props.source} maskedResult={props.result} adapter={props.adapters.transcription} audioLanguage={props.audioLanguage} onAudioLanguageChange={props.onAudioLanguageChange} />
     </div>
   </div>;
 }

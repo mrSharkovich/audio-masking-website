@@ -1,24 +1,63 @@
 import { useEffect, useRef, useState } from 'react';
-import { httpQuality, qualityComparisons, qualityMetrics } from '../adapters/httpQuality';
-import type { QualityAvailability, QualityComparison, QualityEvaluationAdapter, QualityRecordings, QualityScores } from '../adapters/httpQuality';
+import type { CSSProperties } from 'react';
+import { httpQuality, qualityComparisons, qualityMetrics, qualityScales } from '../adapters/httpQuality';
+import type { QualityComparison, QualityEvaluationAdapter, QualityProbe, QualityRecordings, QualityScores } from '../adapters/httpQuality';
+import { QualityInfo } from './QualityInfo';
+import { qualityInterpretation } from './qualityInterpretation';
+import { SaveFileButton } from './SaveFileButton';
 
 const pairTitles = {
   masked: 'Исходная ↔ Маскированная',
   demasked: 'Исходная ↔ Демаскированная',
   masked_demasked: 'Маскированная ↔ Демаскированная',
 };
-const labels = { PESQ: 'PESQ Wideband', ViSQOL: 'ViSQOL без lattice', ViSQOL_LATTICE: 'ViSQOL с lattice' };
+const exportPairs = {
+  masked: ['original', 'masked'],
+  demasked: ['original', 'demasked'],
+  masked_demasked: ['masked', 'demasked'],
+} as const;
+type RecordingNames = Partial<Record<keyof QualityRecordings, string>>;
+const formatScore = (value: number) => value.toLocaleString('ru-RU', { maximumFractionDigits: 3 });
 
-export function QualityPanel({ recordings, testMode, adapter = httpQuality }: {
+function markdownCell(value: string) {
+  return value.replace(/[\r\n]+/g, ' ').replaceAll('&', '&amp;').replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;').replace(/[\\|`*_[\]~]/g, '\\$&');
+}
+
+function qualityReport(scores: QualityScores, names: RecordingNames | undefined, testMode: boolean) {
+  const titles = {
+    original: 'Исходная',
+    masked: testMode ? 'Тестовая маскированная копия' : 'Маскированная',
+    demasked: testMode ? 'Тестовая демаскированная копия' : 'Демаскированная',
+  };
+  const rows = qualityComparisons.map((pair) => {
+    const comparison = exportPairs[pair].map((key) => names?.[key] ? `${titles[key]} (${names[key]})` : titles[key]).join(' — ');
+    const cells = qualityMetrics.map((metric) => {
+      const score = scores[pair]?.[metric];
+      if (!score) return 'Не рассчитано';
+      if (score.status === 'success') {
+        return qualityInterpretation(metric, score.value) ? formatScore(score.value) : 'Ошибка: некорректная оценка';
+      }
+      return `${score.status === 'unavailable' ? 'Недоступно' : 'Ошибка'}: ${score.message}`;
+    });
+    return `| ${[comparison, ...cells].map(markdownCell).join(' | ')} |`;
+  });
+  return ['| Сравнение | PESQ | ViSQOL | ViSQOL с lattice |', '| --- | --- | --- | --- |', ...rows, ''].join('\n');
+}
+
+export function QualityPanel({ recordings, recordingNames, testMode, adapter = httpQuality, probe }: {
   recordings: QualityRecordings | null;
+  recordingNames?: RecordingNames;
   testMode: boolean;
   adapter?: QualityEvaluationAdapter;
+  probe?: QualityProbe;
 }) {
   const hasFiles = Boolean(recordings?.original.size && recordings.masked.size && recordings.demasked.size);
   const active = useRef<AbortController | null>(null);
-  const [availability, setAvailability] = useState<QualityAvailability | null>(null);
-  const [checking, setChecking] = useState(hasFiles);
-  const [probeError, setProbeError] = useState(false);
+  const [localProbe, setLocalProbe] = useState<QualityProbe>('checking');
+  const status = probe ?? localProbe;
+  const checking = hasFiles && status === 'checking';
+  const availability = typeof status === 'object' ? status : null;
   const [running, setRunning] = useState(false);
   const [selected, setSelected] = useState<QualityComparison[]>(['masked']);
   const [scores, setScores] = useState<QualityScores | null>(null);
@@ -26,20 +65,19 @@ export function QualityPanel({ recordings, testMode, adapter = httpQuality }: {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!hasFiles) return;
+    if (!hasFiles || probe !== undefined) return;
     const controller = new AbortController();
     void adapter.status(controller.signal).then((result) => {
-      if (!controller.signal.aborted) setAvailability(result);
+      if (!controller.signal.aborted) setLocalProbe(result);
     }).catch(() => {
-      if (!controller.signal.aborted) setProbeError(true);
-    }).finally(() => {
-      if (!controller.signal.aborted) setChecking(false);
+      if (!controller.signal.aborted) setLocalProbe('error');
     });
-    return () => {
-      controller.abort();
-      active.current?.abort();
-      active.current = null;
-    };
+    return () => controller.abort();
+  }, [adapter, hasFiles, probe]);
+
+  useEffect(() => () => {
+    active.current?.abort();
+    active.current = null;
   }, [adapter, hasFiles]);
 
   async function run() {
@@ -73,8 +111,11 @@ export function QualityPanel({ recordings, testMode, adapter = httpQuality }: {
   }
 
   return <section className="auxiliary-panel" aria-labelledby="quality-heading">
-    <div className="panel-title"><h3 id="quality-heading">Оценка качества аудио</h3></div>
-    <p>PESQ Wideband и ViSQOL Speech при 16 кГц оценивают качество звучания. Стойкость маскирования требует отдельной проверки.</p>
+    <div className="panel-title"><span className="section-index" aria-hidden="true">03</span><h3 id="quality-heading">Оценка качества аудио</h3><QualityInfo />
+      <SaveFileButton label="Сохранить оценки качества" filename="audiomask-quality.md" extension=".md"
+        disabled={running} content={scores && Object.keys(scores).length ? () => qualityReport(scores, recordingNames, testMode) : undefined} />
+    </div>
+    <p>Метрики при 16 кГц оценивают качество звучания. Стойкость маскирования требует отдельной проверки.</p>
     {testMode ? <p className="result-notice">В тестовом режиме сравниваются копии аудио. Оценки не характеризуют работу настоящего алгоритма маскирования.</p> : null}
     {hasFiles ? <>
       <div className="quality-pairs" role="group" aria-label="Пары аудиозаписей">
@@ -98,7 +139,7 @@ export function QualityPanel({ recordings, testMode, adapter = httpQuality }: {
     </> : <p>Для оценки нужны исходная, маскированная и демаскированная записи.</p>}
     <div role="status" aria-live="polite" aria-atomic="true">
       {checking ? <p>Проверяем доступность метрик…</p> : null}
-      {probeError && !scores ? <p>Не удалось проверить доступность метрик. Можно повторить запрос кнопкой оценки.</p> : null}
+      {status === 'error' && !scores ? <p>Не удалось проверить доступность метрик. Можно повторить запрос кнопкой оценки.</p> : null}
       {message ? <p>{message}</p> : null}
       {hasFiles ? selected.map((name) => <div className="quality-comparison" key={name}>
         <h4>{pairTitles[name]}</h4>
@@ -106,13 +147,18 @@ export function QualityPanel({ recordings, testMode, adapter = httpQuality }: {
           {qualityMetrics.map((metric) => {
             const score = scores?.[name]?.[metric];
             const ready = availability?.[metric];
+            const interpretation = !running && score?.status === 'success'
+              ? qualityInterpretation(metric, score.value) : null;
             return <div className="metric" key={metric}>
-              <strong>{labels[metric]}</strong>
-              <span className="metric-value">{score?.status === 'success'
-                ? score.value.toLocaleString('ru-RU', { maximumFractionDigits: 3 }) : '—'}</span>
-              <span>{running ? 'Вычисляется' : score?.status === 'success' ? 'Рассчитано'
+              <strong>{qualityScales[metric].label}</strong>
+              <span className="metric-value">{interpretation && score?.status === 'success'
+                ? formatScore(score.value) : '—'}</span>
+              {interpretation ? <span className="metric-interpretation" style={{ '--quality-hue': interpretation.hue } as CSSProperties}>
+                <span className="metric-dot" aria-hidden="true" style={{ backgroundColor: 'currentColor' }} />
+                {interpretation.label}
+              </span> : <span>{running ? 'Вычисляется' : score?.status === 'success' ? 'Сервер вернул некорректный результат.'
                 : score?.status === 'unavailable' || (!score && ready?.status === 'unavailable') ? 'Недоступно'
-                  : score?.message ?? ready?.message ?? 'Не запрошено'}</span>
+                  : score?.message ?? ready?.message ?? 'Не запрошено'}</span>}
             </div>;
           })}
         </div>

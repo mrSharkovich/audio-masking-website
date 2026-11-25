@@ -4,7 +4,7 @@ import { useWorkspace } from './useWorkspace';
 import type { AudioResult, DemoSettings, MaskingOptions, OperationValue } from '../types/audio';
 
 const settings: DemoSettings = { enabled: true, masking: 'success', quality: 'success', transcription: 'success' };
-const source = () => new File(['synthetic test input'], 'fixture.audio', { type: 'audio/test' });
+const source = () => new File(['synthetic test input'], 'fixture.wav', { type: 'audio/wav' });
 const demoResult = (): AudioResult => ({ id: crypto.randomUUID(), audio: new Blob(['independent fixture']), fileName: 'demo.wav', demonstration: true });
 
 describe('workspace transitions', () => {

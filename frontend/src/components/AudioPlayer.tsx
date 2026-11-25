@@ -7,14 +7,15 @@ interface Props {
   onDuration?: (duration: number | null) => void;
   mediaRef?: Ref<HTMLAudioElement>;
   titleAction?: ReactNode;
+  hideLabel?: boolean;
 }
 
-export function AudioPlayer({ label, url, onDuration, mediaRef, titleAction }: Props) {
+export function AudioPlayer({ label, url, onDuration, mediaRef, titleAction, hideLabel }: Props) {
   const [failedUrl, setFailedUrl] = useState<string | undefined>();
   useEffect(() => { onDuration?.(null); }, [url, onDuration]);
   return <div className="player-block">
-    {titleAction ? <div className="player-title-row"><span className="player-label">{label}</span>{titleAction}</div>
-      : <span className="player-label">{label}</span>}
+    {titleAction ? <div className="player-title-row">{hideLabel ? null : <span className="player-label">{label}</span>}{titleAction}</div>
+      : hideLabel ? null : <span className="player-label">{label}</span>}
     <audio
       key={url}
       ref={mediaRef}

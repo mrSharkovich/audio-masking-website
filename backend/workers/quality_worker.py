@@ -79,7 +79,10 @@ def main():
     degraded = read_pcm(request["degraded"], np)
     if reference.size != degraded.size:
         return 2
-    if any(signal.min() == signal.max() for signal in (reference, degraded)):
+    unpadded_frames = request.get("unpadded_frames")
+    # A zero tail must not turn a constant original into a valid speech signal.
+    reference_signal = reference if unpadded_frames is None else reference[:unpadded_frames]
+    if any(signal.min() == signal.max() for signal in (reference_signal, degraded)):
         return 4
     if metric == "PESQ":
         value = pesq(16000, reference, degraded, "wb")

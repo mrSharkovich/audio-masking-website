@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { AudioResult, DemoSettings, MaskingAdapter, MaskingOptions } from '../types/audio';
+import { isSupportedAudioFile, unsupportedAudioTitle } from '../types/audioUpload';
 
 export function useWorkspace(adapter: MaskingAdapter) {
   const [source, setSource] = useState<File | null>(null);
@@ -20,6 +21,7 @@ export function useWorkspace(adapter: MaskingAdapter) {
     }
     const file = files[0];
     if (!file.size) { setError('Файл пуст. Выберите другую запись.'); return; }
+    if (!isSupportedAudioFile(file)) { setError(unsupportedAudioTitle); return; }
     revision.current++;
     setSource(file); setResult(null); setView('form'); setError('');
   };

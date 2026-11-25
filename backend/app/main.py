@@ -16,10 +16,11 @@ from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException
 
 from .asr import AsrAdapter, AsrUnavailable, AsrFfmpegUnavailable, AsrTimeout, Language, MODELS, WhisperAdapter, GigaAMAdapter
-from .audio import InvalidAudio, prepare_wav, AudioPreparationUnavailable
+from .audio import InvalidAudio, AudioPreparationUnavailable, prepare_wav
 from .config import Settings
 from .masking import (EmptyUpload, MaskingCancelled, MATRICES, MODES, NOTICE,
                       UploadTooLarge, configured_masking_executor, process_upload)
+from .masking_audio import prepare_masking_audio
 from .process import WorkerFailed, WorkerUnavailable
 from .quality import quality_router
 
@@ -87,16 +88,25 @@ class TranscriptResponse(BaseModel):
     text: str
 
 
-def recognize(upload: UploadFile, language: Language, adapter: AsrAdapter, settings: Settings, slots: BoundedSemaphore):
+class AsrPreparationCancelled(Exception):
+    pass
+
+
+def recognize(upload: UploadFile, language: Language, adapter: AsrAdapter, settings: Settings,
+              slots: BoundedSemaphore, cancelled: Event):
     if not slots.acquire(blocking=False):
         return error(503, "asr_busy", "Локальное распознавание занято. Повторите запрос позже.")
     try:
-        return recognize_file(upload, language, adapter, settings)
+        return recognize_file(upload, language, adapter, settings, cancelled)
     finally:
         slots.release()
 
 
-def recognize_file(upload: UploadFile, language: Language, adapter: AsrAdapter, settings: Settings):
+def recognize_file(upload: UploadFile, language: Language, adapter: AsrAdapter, settings: Settings, cancelled: Event):
+    def checkpoint():
+        if cancelled.is_set():
+            raise AsrPreparationCancelled()
+
     # No client filename is used as a filesystem path. The directory belongs only
     # to this request. Thread completion precedes deletion, also on cancellation.
     with TemporaryDirectory(prefix="audiomask-", dir=settings.temp_directory) as directory:
@@ -104,6 +114,7 @@ def recognize_file(upload: UploadFile, language: Language, adapter: AsrAdapter, 
         size = 0
         with path.open("wb") as target:
             while chunk := upload.file.read(64 * 1024):
+                checkpoint()
                 size += len(chunk)
                 if size > settings.max_file_bytes:
                     return error(413, "upload_too_large", "Превышен допустимый размер аудиофайла.")
@@ -111,11 +122,19 @@ def recognize_file(upload: UploadFile, language: Language, adapter: AsrAdapter, 
         if not size:
             return error(422, "empty_audio", "Аудиофайл пуст.")
         try:
-            prepared = prepare_wav(path, Path(directory) / "normalized.wav", settings)
+            normalized = Path(directory) / "normalized.wav"
+            ffmpeg = settings.ffmpeg_path
+            if ffmpeg is not None and ffmpeg.is_absolute() and ffmpeg.is_file():
+                prepared = prepare_masking_audio(path, normalized, settings, checkpoint)
+            else:
+                prepared = prepare_wav(path, normalized, settings, checkpoint=checkpoint)
         except InvalidAudio:
-            return error(415, "invalid_audio", "Нужен корректный WAV PCM, mono или stereo, 8–192 кГц в пределах допустимой длительности.")
+            return error(415, "invalid_audio", "Не удалось декодировать аудио. Проверьте формат, целостность и длительность записи.")
         except AudioPreparationUnavailable:
-            return error(503, "audio_preparation_unavailable", "Преобразование WAV недоступно: зависимости не подключены.")
+            return error(503, "audio_preparation_unavailable", "Подготовка аудио недоступна. Проверьте настройки FFmpeg.")
+        except TimeoutError:
+            return error(504, "asr_timeout", "Истекло время подготовки аудио для распознавания.")
+        checkpoint()
         try:
             text = adapter.transcribe(prepared, language)
         except AsrTimeout:
@@ -257,7 +276,22 @@ def create_app(settings: Settings | None = None, adapters: Mapping[str, AsrAdapt
                     return error(422, "invalid_form", "Поле file должно содержать аудиофайл.")
                 if language not in ("ru", "en"):
                     return error(422, "invalid_language", "Допустимые языки: ru и en.")
-                return await run_in_threadpool(recognize, upload, language, registry[MODELS[language]], settings, slots)
+                cancelled = Event()
+
+                async def watch_disconnect():
+                    while (await request.receive())["type"] != "http.disconnect":
+                        pass
+                    cancelled.set()
+
+                async with create_task_group() as task_group:
+                    task_group.start_soon(watch_disconnect)
+                    try:
+                        return await run_in_threadpool(recognize, upload, language, registry[MODELS[language]],
+                                                       settings, slots, cancelled)
+                    except AsrPreparationCancelled:
+                        return Response(status_code=499)
+                    finally:
+                        task_group.cancel_scope.cancel()
         except HTTPException:
             return error(422, "invalid_form", "Некорректный multipart-запрос.")
         except Exception:

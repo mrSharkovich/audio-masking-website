@@ -62,7 +62,124 @@ function adapters(): AudioAdapters {
     transcription: { transcribe: vi.fn().mockResolvedValue({ status: 'unavailable', message: 'Локальная транскрибация пока не подключена.' }) },
   } satisfies AudioAdapters;
 }
-const selectFile = (name = 'synthetic.audio') => fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [new File(['test fixture'], name)] } });
+const selectFile = (name = 'synthetic.wav') => fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [syntheticWav(name)] } });
+const testBanner = 'Маскирование работает в тестовом режиме';
+const expectStages = (...stages: string[]) => {
+  expect([...document.querySelectorAll('.workspace-content .section-index')].map((number) =>
+    `${number.textContent} ${number.nextElementSibling?.textContent}`)).toEqual(stages);
+};
+const resultStages = (title = 'Результат обработки') =>
+  ['01 Исходная запись', `02 ${title}`, '03 Оценка качества аудио', '04 Транскрибация'];
+const formStages = resultStages();
+
+it('shows all four stages and only the waiting messages before masking', () => {
+  render(<App adapters={adapters()} />);
+  expectStages(...formStages);
+  const result = within(screen.getByRole('region', { name: 'Результат обработки' }));
+  const quality = within(screen.getByRole('region', { name: 'Оценка качества аудио' }));
+  expect(result.getByText('Результаты появятся после маскирования')).toBeVisible();
+  expect(quality.getByText('Сначала выполните маскирование')).toBeVisible();
+  expect(quality.queryByRole('button', { name: 'Оценить качество' })).not.toBeInTheDocument();
+  expect(result.queryByRole('combobox')).not.toBeInTheDocument();
+});
+
+it('rejects non-audio chooser and drop inputs before accepting a valid WAV', async () => {
+  const services = adapters();
+  services.masking.available = async () => 'real';
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ metrics: {} })));
+  render(<App adapters={services} />);
+  await screen.findByText('Маскирование доступно');
+  const input = screen.getByLabelText('Аудиофайл');
+  const accept = input.getAttribute('accept')?.split(',');
+  for (const extension of ['wav', 'mp3', 'm4a', 'flac', 'ogg', 'aac', 'aiff', 'amr', 'ac3', 'eac3', 'au', 'mka', 'mkv', 'webm']) {
+    expect(accept).toContain(`.${extension}`);
+  }
+  expect(accept).not.toContain('.pdf');
+  for (const [name, type] of [['paper.pdf', 'application/pdf'], ['image.png', 'image/png'],
+    ['letter.docx', ''], ['files.zip', 'application/octet-stream'], ['paper.wav', 'application/pdf']]) {
+    fireEvent.change(input, { target: { files: [new File(['fixture'], name, { type })] } });
+    expect(screen.getByRole('alert')).toHaveTextContent('Неподдерживаемый формат файла');
+    expect(screen.getByRole('alert')).toHaveTextContent('Загрузите аудиозапись в поддерживаемом формате');
+  }
+  fireEvent.drop(screen.getByTestId('dropzone'), { dataTransfer: { files: [new File(['%PDF-1.7'], 'drop.pdf')] } });
+  expect(screen.getByRole('alert')).toHaveTextContent('Неподдерживаемый формат файла');
+  expect(screen.getByText('Параметры маскирования', { exact: false }).closest('details')).not.toHaveAttribute('open');
+  expect(screen.queryByLabelText('Предпрослушивание исходной записи')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Начать маскирование/ })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Запустить транскрибацию' })).toBeDisabled();
+  expect(services.masking.run).not.toHaveBeenCalled();
+  expect(services.transcription.transcribe).not.toHaveBeenCalled();
+  fireEvent.drop(screen.getByTestId('dropzone'), { dataTransfer: { files: [syntheticWav('valid.WAV')] } });
+  expect(screen.getByLabelText('Предпрослушивание исходной записи')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Начать маскирование/ })).toBeEnabled();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it.each([['SONG.MP3', 'audio/mpeg'], ['x.m4a', ''], ['x.flac', 'application/octet-stream'],
+  ['x.OGG', 'application/ogg'], ['x.aiff', 'audio/x-aiff'], ['x.MKA', 'audio/x-matroska'],
+  ['x.webm', 'video/webm'], ['x.mkv', 'video/x-matroska'], ['x.amr', ''], ['x.ec3', 'audio/eac3'],
+])('accepts supported audio metadata %s (%s)', (name, type) => {
+  render(<App adapters={adapters()} />);
+  fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [new File(['fixture'], name, { type })] } });
+  expect(screen.getByText(name)).toBeVisible();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+it.each([true, false])('reports the actual metric availability in test mode (all ready: %s)', async (allReady) => {
+  const fetcher = vi.fn<typeof fetch>(async (url) => url === '/api/masking/status'
+    ? Response.json({ test_mode: true, notice: maskingTestNotice })
+    : Response.json({ metrics: { PESQ: { status: 'available' }, ViSQOL: { status: 'available' },
+      ViSQOL_LATTICE: { status: allReady ? 'available' : 'unavailable' } } }));
+  vi.stubGlobal('fetch', fetcher);
+  render(<App />);
+  expect(await screen.findByText(testBanner)).toBeInTheDocument();
+  expect(await screen.findByText(allReady ? 'Оценка качества доступна. Настоящее маскирование пока не выполняется.'
+    : 'Доступна часть метрик оценки качества. Настоящее маскирование пока не выполняется.')).toBeInTheDocument();
+  expect(screen.queryByText(/оценка качества пока недоступны|распознавание речи доступно/i)).not.toBeInTheDocument();
+  expect(fetcher.mock.calls.map(([url]) => url)).toEqual(['/api/masking/status', '/api/quality/status']);
+});
+
+it('reports an unreachable backend without asserting metric or ASR readiness', async () => {
+  const fetcher = vi.fn().mockRejectedValue(new Error('offline'));
+  vi.stubGlobal('fetch', fetcher);
+  render(<App />);
+  await act(async () => {});
+  expect(screen.getByText('Локальный backend недоступен или маскирование в нём не подключено.')).toBeInTheDocument();
+  expect(screen.queryByText(/оценка качества доступна|распознавание речи доступно/i)).not.toBeInTheDocument();
+  expect(fetcher).toHaveBeenCalledOnce();
+});
+
+it('opens parameters for each accepted file and preserves manual toggling on re-render', async () => {
+  const user = userEvent.setup();
+  render(<App adapters={adapters()} />);
+  const summary = screen.getByText('Параметры маскирования', { exact: false });
+  const details = summary.closest('details');
+  const indicator = summary.querySelector('.parameters-indicator');
+  expectStages(...formStages);
+  expect(indicator).toHaveAttribute('aria-hidden', 'true');
+  expect(summary).not.toHaveTextContent(/[＋+]/);
+  expect(details).not.toHaveAttribute('open');
+  expect(summary).toHaveAttribute('aria-expanded', 'false');
+  selectFile('first.wav');
+  expect(details).toHaveAttribute('open');
+  expectStages(...formStages);
+  expect(summary).toHaveAttribute('aria-expanded', 'true');
+  summary.focus();
+  await user.keyboard('{Enter}');
+  expect(details).not.toHaveAttribute('open');
+  expect(summary).toHaveAttribute('aria-expanded', 'false');
+  expect(summary.querySelector('.parameters-indicator')).toBe(indicator);
+  expectStages(...formStages);
+  fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [new File([], 'empty.wav')] } });
+  expect(screen.getByRole('alert')).toHaveTextContent('Файл пуст');
+  await user.click(screen.getByLabelText('English'));
+  expect(details).not.toHaveAttribute('open');
+  await user.click(summary);
+  expect(details).toHaveAttribute('open');
+  await user.click(summary);
+  selectFile('second.wav');
+  expect(details).toHaveAttribute('open');
+});
 
 it('removes demo controls and workspace labels and reports unavailable operations', async () => {
   const services = adapters();
@@ -76,21 +193,21 @@ it('removes demo controls and workspace labels and reports unavailable operation
   selectFile();
   await user.click(screen.getByRole('button', { name: /Начать маскирование/ }));
   expect(screen.getByRole('alert')).toHaveTextContent('Реальная обработка недоступна: сервис пока не подключён.');
-  expect(screen.getByText('synthetic.audio')).toBeInTheDocument();
+  expect(screen.getByText('synthetic.wav')).toBeInTheDocument();
   expect(screen.getByLabelText('Предпрослушивание исходной записи')).toHaveAttribute('controls');
   expect(screen.queryByRole('heading', { name: 'Результат демонстрации' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /Скачать/ })).not.toBeInTheDocument();
   await user.click(screen.getByLabelText('English'));
-  await user.click(screen.getByLabelText('Оба файла'));
+  expect(screen.getByLabelText('Маскированная запись')).toBeDisabled();
+  expect(screen.getByLabelText('Демаскированная запись')).toBeDisabled();
   await user.click(screen.getByRole('button', { name: 'Запустить транскрибацию' }));
   expect(await screen.findByText('Локальная транскрибация пока не подключена.')).toBeInTheDocument();
-  expect(screen.getByText(/Реальная маскированная запись отсутствует/)).toBeInTheDocument();
   expect(services.masking.run).not.toHaveBeenCalled();
   expect(services.quality.evaluate).not.toHaveBeenCalled();
   expect(services.transcription.transcribe).toHaveBeenCalledTimes(1);
   expect(services.transcription.transcribe).toHaveBeenCalledWith(expect.any(File), 'en', expect.any(AbortSignal));
   await user.click(screen.getByRole('button', { name: 'Удалить файл' }));
-  expect(screen.queryByText('synthetic.audio')).not.toBeInTheDocument();
+  expect(screen.queryByText('synthetic.wav')).not.toBeInTheDocument();
 });
 
 it('preserves language and theme through navigation and resets language on fresh mount', async () => {
@@ -139,9 +256,8 @@ it.each(['test', 'real'] as const)('processes %s results, plays both files and t
   vi.stubGlobal('fetch', fetcher);
   const user = userEvent.setup();
   render(<App />);
-  expect(await screen.findByText(test ? maskingTestNotice : 'Маскирование доступно')).toBeInTheDocument();
+  expect(await screen.findByText(test ? testBanner : 'Маскирование доступно')).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [source] } });
-  await user.click(screen.getByText('Параметры маскирования', { exact: false }));
   const parameters = within(screen.getByRole('group', { name: 'Параметры маскирования' }));
   const mode = parameters.getByRole('combobox', { name: 'Тип маскирования' });
   const matrix = parameters.getByRole('combobox', { name: 'Размер матрицы маскирования' });
@@ -156,11 +272,13 @@ it.each(['test', 'real'] as const)('processes %s results, plays both files and t
   await user.selectOptions(matrix, '128');
   await user.click(screen.getByRole('button', { name: test ? /Запустить тестовую обработку/ : /Начать маскирование/ }));
   expect(await screen.findByRole('heading', { name: test ? 'Результат тестовой обработки' : 'Результат обработки' })).toBeInTheDocument();
+  expectStages(...resultStages(test ? 'Результат тестовой обработки' : 'Результат обработки'));
+  expect(screen.queryByText('Результаты появятся после маскирования')).not.toBeInTheDocument();
+  expect(screen.queryByText('Сначала выполните маскирование')).not.toBeInTheDocument();
   if (!test) expect(screen.queryByText(maskingTestNotice)).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Оценка качества аудио' })).toBeInTheDocument();
   expect(fetcher.mock.calls.some(([url]) => url === '/api/quality/evaluate')).toBe(false);
-  const form = fetcher.mock.calls[1][1]?.body as FormData;
-  expect(fetcher.mock.calls[1][0]).toBe('/api/masking/process');
+  const form = fetcher.mock.calls.find(([url]) => url === '/api/masking/process')?.[1]?.body as FormData;
   expect(form.get('file')).toBe(source);
   expect(form.get('mode')).toBe('one-sided');
   expect(form.get('matrix')).toBe('128');
@@ -179,7 +297,8 @@ it.each(['test', 'real'] as const)('processes %s results, plays both files and t
   if (test) expect(screen.getByText('Тестовая демаскированная копия')).toBeInTheDocument();
   else expect(screen.queryByText('Тестовая демаскированная копия')).not.toBeInTheDocument();
   await user.selectOptions(recording, 'original');
-  await user.click(screen.getByRole('radio', { name: test ? 'Тестовый демаскированный WAV' : 'Демаскированное аудио' }));
+  await user.click(screen.getByLabelText('Исходная запись', { selector: 'input' }));
+  await user.click(screen.getByLabelText('Демаскированная запись'));
   await user.click(screen.getByRole('button', { name: 'Запустить транскрибацию' }));
   expect(await screen.findByText('Текст тестовой копии')).toBeInTheDocument();
   const asrForm = fetcher.mock.calls.find(([url]) => url === '/api/asr/transcribe')?.[1]?.body as FormData;
@@ -187,6 +306,8 @@ it.each(['test', 'real'] as const)('processes %s results, plays both files and t
   expect(new Uint8Array(await readBytes(asrForm.get('file') as File))).toEqual(bytes);
   await user.click(screen.getByRole('button', { name: 'Оценить качество' }));
   expect(await screen.findByText('4,321')).toBeInTheDocument();
+  expectStages(...resultStages(test ? 'Результат тестовой обработки' : 'Результат обработки'));
+  expect(fetcher.mock.calls.filter(([url]) => url === '/api/quality/status')).toHaveLength(1);
   expect(screen.getByText('3,2')).toBeInTheDocument();
   expect(screen.getByText('Недоступно')).toBeInTheDocument();
   const qualityForm = fetcher.mock.calls.find(([url]) => url === '/api/quality/evaluate')?.[1]?.body as FormData;
@@ -196,7 +317,6 @@ it.each(['test', 'real'] as const)('processes %s results, plays both files and t
     expect(new Uint8Array(await readBytes(file as File))).toEqual(bytes);
   }
   await user.click(screen.getByRole('button', { name: 'Вернуться к форме' }));
-  await user.click(screen.getByText('Параметры маскирования', { exact: false }));
   expect(screen.getByRole('combobox', { name: 'Тип маскирования' })).toBeEnabled();
   expect(screen.getByRole('combobox', { name: 'Размер матрицы маскирования' })).toHaveValue('128');
 });
@@ -205,16 +325,17 @@ it('cancels an active masking request and never renders a late result', async ()
   let finish!: (response: Response) => void;
   const fetcher = vi.fn<typeof fetch>((url) => url === '/api/masking/status'
     ? Promise.resolve(Response.json({ test_mode: true, notice: maskingTestNotice }))
+    : url === '/api/quality/status' ? Promise.resolve(Response.json({ metrics: {} }))
     : new Promise((resolve) => { finish = resolve; }));
   vi.stubGlobal('fetch', fetcher);
   const user = userEvent.setup();
   render(<App />);
-  await screen.findByText(maskingTestNotice);
+  await screen.findByText(testBanner);
   selectFile('fixture.wav');
-  await user.click(screen.getByText('Параметры маскирования', { exact: false }));
   await user.click(screen.getByRole('button', { name: /Запустить тестовую обработку/ }));
   const form = screen.getByRole('form', { name: 'Форма маскирования' });
   expect(within(form).getByRole('status')).toHaveTextContent('Идёт обработка аудио…');
+  expectStages(...formStages);
   expect(screen.getByLabelText('Аудиофайл')).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Заменить файл' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Удалить файл' })).toBeDisabled();
@@ -223,15 +344,90 @@ it('cancels an active masking request and never renders a late result', async ()
   expect(screen.getByRole('button', { name: /Тестовая обработка…/ })).toBeDisabled();
   fireEvent.submit(form);
   fireEvent.drop(screen.getByTestId('dropzone'), { dataTransfer: { files: [syntheticWav('replacement.wav')] } });
-  expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(fetcher.mock.calls.filter(([url]) => url === '/api/masking/process')).toHaveLength(1);
   expect(screen.queryByText('replacement.wav')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Отменить обработку' }));
-  expect(fetcher.mock.calls[1][1]?.signal?.aborted).toBe(true);
+  expect(fetcher.mock.calls.find(([url]) => url === '/api/masking/process')?.[1]?.signal?.aborted).toBe(true);
   await act(async () => { finish(Response.json({ test_mode: true })); });
   await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('Запрос обработки отменён'));
+  expectStages(...formStages);
   expect(screen.queryByRole('heading', { name: 'Результат тестовой обработки' })).not.toBeInTheDocument();
   expect(screen.getByText('fixture.wav')).toBeInTheDocument();
   expect(screen.getByRole('combobox', { name: 'Тип маскирования' })).toBeEnabled();
+});
+
+it('preserves transcripts across tools and masking attempts until the recording actually changes', async () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+  vi.stubGlobal('fetch', vi.fn<typeof fetch>(async (url) => url === '/api/quality/status'
+    ? Response.json({ metrics: { PESQ: { status: 'available' }, ViSQOL: { status: 'available' }, ViSQOL_LATTICE: { status: 'available' } } })
+    : Response.json({ comparisons: { masked: { PESQ: { status: 'success', value: 4 } } } })));
+  const services = adapters();
+  const processed = {
+    id: 'first', audio: syntheticWav('masked.wav'), fileName: 'masked.wav', demonstration: false,
+    masking: { demasked: syntheticWav('demasked.wav'), demaskedFileName: 'demasked.wav',
+      options: { mode: 'two-sided', matrix: 64 }, appliedMatrix: 64 },
+  } as const;
+  const run = vi.fn<AudioAdapters['masking']['run']>()
+    .mockResolvedValueOnce({ status: 'success', value: processed })
+    .mockResolvedValueOnce({ status: 'error', message: 'Повторная обработка не удалась.' })
+    .mockResolvedValueOnce({ status: 'success', value: { ...processed, id: 'second', audio: syntheticWav('masked.wav') } });
+  services.masking = { available: async () => 'real', run };
+  services.transcription.transcribe = vi.fn<AudioAdapters['transcription']['transcribe']>(
+    async (file) => ({ status: 'success', value: `Текст: ${(file as File).name}` }),
+  );
+  const user = userEvent.setup();
+  render(<App adapters={services} />);
+  await screen.findByText('Маскирование доступно');
+  const upload = () => fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [syntheticWav('same.wav')] } });
+  const mask = () => user.click(screen.getByRole('button', { name: /Начать маскирование/ }));
+  const asr = () => user.click(screen.getByRole('button', { name: 'Запустить транскрибацию' }));
+  upload();
+  await asr();
+  expect(await screen.findByText('Текст: same.wav')).toBeVisible();
+  await mask();
+  expect(await screen.findByRole('heading', { name: 'Результат обработки' })).toBeVisible();
+  expect(screen.getByText('Текст: same.wav')).toBeVisible();
+  await user.click(screen.getByLabelText('Маскированная запись'));
+  await user.click(screen.getByLabelText('Демаскированная запись'));
+  await asr();
+  expect(await screen.findByText('Текст: demasked.wav')).toBeVisible();
+  await user.selectOptions(screen.getByRole('combobox', { name: 'Аудиозапись' }), 'masked');
+  await user.click(screen.getByLabelText('Исходная ↔ Демаскированная'));
+  await user.click(screen.getByRole('button', { name: 'Оценить качество' }));
+  expect(await screen.findByText('Высокое качество')).toBeVisible();
+  expect(screen.getByText('Текст: masked.wav')).toBeVisible();
+
+  await user.click(screen.getByRole('button', { name: 'Вернуться к форме' }));
+  fireEvent.change(screen.getByLabelText('Аудиофайл'), { target: { files: [new File(['%PDF-1.7'], 'replacement.pdf')] } });
+  expect(screen.getByRole('alert')).toHaveTextContent('Неподдерживаемый формат файла');
+  expect(screen.getByText('Текст: same.wav')).toBeVisible();
+  expect(screen.getByText('Текст: masked.wav')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Открыть текущий результат' }));
+  expectStages(...resultStages());
+  await user.click(screen.getByRole('button', { name: 'Вернуться к форме' }));
+  const currentSummary = screen.getByText('Параметры маскирования', { exact: false });
+  await user.click(currentSummary);
+  await user.click(currentSummary);
+  await user.selectOptions(screen.getByLabelText('Размер матрицы маскирования'), '128');
+  expect(screen.getByText('Текст: masked.wav')).toBeVisible();
+  await mask();
+  expect(await screen.findByText('Повторная обработка не удалась.')).toBeVisible();
+  expectStages(...formStages);
+  expect(screen.getByText('Оценка доступна в текущем результате.')).toBeVisible();
+  expect(screen.getByText('Текст: masked.wav')).toBeVisible();
+  await mask();
+  expect(await screen.findByRole('heading', { name: 'Результат обработки' })).toBeVisible();
+  expectStages(...resultStages());
+  expect(screen.queryByText('Текст: masked.wav')).not.toBeInTheDocument();
+  expect(screen.getByText('Текст: same.wav')).toBeVisible();
+  expect(screen.getByText('Текст: demasked.wav')).toBeVisible();
+  await user.click(screen.getByRole('button', { name: 'Вернуться к форме' }));
+  upload();
+  expectStages(...formStages);
+  expect(screen.queryByText('Текст: same.wav')).not.toBeInTheDocument();
+  expect(screen.queryByText('Текст: demasked.wav')).not.toBeInTheDocument();
+  expect(screen.getByLabelText('Исходная запись', { selector: 'input' })).toBeChecked();
+  expect(screen.getByLabelText('Маскированная запись')).toBeDisabled();
 });
 
 it('aborts the old request on navigation and leaves the new workspace usable', async () => {
@@ -244,13 +440,13 @@ it('aborts the old request on navigation and leaves the new workspace usable', a
   services.masking = { available: async () => 'test', run };
   const user = userEvent.setup();
   render(<App adapters={services} />);
-  await screen.findByText(maskingTestNotice);
+  await screen.findByText(testBanner);
   selectFile('old.wav');
   await user.click(screen.getByRole('button', { name: /Запустить тестовую обработку/ }));
   await user.click(within(screen.getByRole('navigation')).getByRole('link', { name: 'О проекте' }));
   expect(run.mock.calls[0][3]?.aborted).toBe(true);
   await user.click(within(screen.getByRole('navigation')).getByRole('link', { name: 'Обработка' }));
-  await screen.findByText(maskingTestNotice);
+  await screen.findByText(testBanner);
   selectFile('current.wav');
   await user.click(screen.getByRole('button', { name: /Запустить тестовую обработку/ }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Ошибка тестовой обработки.');

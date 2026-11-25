@@ -40,6 +40,7 @@ export type QualityResult = Record<MetricName, OperationValue<number>>;
 export type TranscriptSource = 'original' | 'masked' | 'demasked';
 export type TranscriptSelection = TranscriptSource | 'both';
 export type AudioLanguage = 'ru' | 'en';
+export const emptyTranscriptionTitle = 'Не удалось распознать речь';
 export type AsrConfiguration =
   | { language: 'ru'; model: 'gigaam-multi' }
   | { language: 'en'; model: 'whisper' };

@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import { ResultView } from './ResultView';
-import { createDemoAdapters } from '../adapters/demoAudio';
 import { syntheticWav } from '../test/audio';
 import { maskingTestNotice } from '../types/audio';
 import type { AudioResult } from '../types/audio';
@@ -18,10 +17,8 @@ function fixture() {
 }
 
 function view(result: AudioResult, source: File) {
-  const adapters = { ...createDemoAdapters(), transcription: { transcribe: vi.fn() } };
-  return <ResultView result={result} source={source} adapters={adapters}
-    settings={{ enabled: false, masking: 'unavailable', quality: 'unavailable', transcription: 'unavailable' }}
-    audioLanguage="ru" onAudioLanguageChange={vi.fn()} headingRef={{ current: null }} onForm={vi.fn()} onNew={vi.fn()} />;
+  return <ResultView result={result} source={source} qualityProbe="error"
+    headingRef={{ current: null }} onForm={vi.fn()} onNew={vi.fn()} />;
 }
 
 it('plays and downloads only the selected file, pauses old players, and resets for a new result', async () => {
@@ -36,6 +33,7 @@ it('plays and downloads only the selected file, pauses old players, and resets f
   expect(screen.getByText(maskingTestNotice)).toBeInTheDocument();
   expect(screen.getByText(/Выбранный размер матрицы: 64.*: 16/)).toBeInTheDocument();
   const expectTrack = (title: string, file: File, name = file.name) => {
+    expect(screen.getAllByText(title, { exact: true })).toHaveLength(1);
     const audio = screen.getByLabelText<HTMLAudioElement>(title, { selector: 'audio' });
     expect(container.querySelectorAll('audio')).toHaveLength(1);
     expect(audio).toHaveAttribute('src', urls.get(file));

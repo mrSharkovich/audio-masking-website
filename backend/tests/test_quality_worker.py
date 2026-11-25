@@ -5,15 +5,17 @@ import logging
 import sys
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 import warnings
 
 from workers import quality_worker
 
 
 class QualityWorkerTests(unittest.TestCase):
-    def run_worker(self, metric, api, *, runtime=True):
+    def run_worker(self, metric, api, *, runtime=True, signals=None, unpadded_frames=None):
         request = {"metric": metric, "reference": "reference.wav", "degraded": "degraded.wav"}
+        if unpadded_frames is not None:
+            request["unpadded_frames"] = unpadded_frames
         modules = {
             "numpy": Mock(),
             "visqol": SimpleNamespace(VisqolApi=Mock(return_value=api)),
@@ -22,7 +24,7 @@ class QualityWorkerTests(unittest.TestCase):
         signal = SimpleNamespace(size=16000, min=lambda: -1, max=lambda: 1)
         output = StringIO()
         with patch.dict(sys.modules, modules), patch("sys.stdin", StringIO(json.dumps(request))), \
-                patch.object(quality_worker, "read_pcm", return_value=signal), redirect_stdout(output):
+                patch.object(quality_worker, "read_pcm", side_effect=signals, return_value=signal), redirect_stdout(output):
             code = quality_worker.main()
         return code, output.getvalue()
 
@@ -41,6 +43,18 @@ class QualityWorkerTests(unittest.TestCase):
         api = Mock()
         self.assertEqual(self.run_worker("ViSQOL_LATTICE", api, runtime=False), (3, ""))
         api.create.assert_not_called()
+        api.measure.assert_not_called()
+
+    def test_padding_does_not_make_constant_reference_eligible(self):
+        api = Mock()
+        reference = MagicMock(size=65536)
+        reference.min.return_value = 0
+        reference.max.return_value = 27
+        reference.__getitem__.return_value = SimpleNamespace(min=lambda: 27, max=lambda: 27)
+        degraded = SimpleNamespace(size=65536, min=lambda: -1, max=lambda: 1)
+        code, output = self.run_worker("ViSQOL_LATTICE", api, signals=(reference, degraded), unpadded_frames=60640)
+        self.assertEqual((code, output), (4, ""))
+        reference.__getitem__.assert_called_once_with(slice(60640))
         api.measure.assert_not_called()
 
     def test_reported_lattice_fallback_returns_unavailable(self):
